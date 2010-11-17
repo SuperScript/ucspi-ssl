@@ -1,0 +1,48 @@
+SSL UCSPI protocol definition
+Copyright 2001
+SuperScript Technology, Inc. sst@superscript.com
+
+This document defines the SSL protocol for UCSPI-1996 tools. An SSL
+client communicates with an SSL server, on the same machine or on a
+different machine, via the TCP/IP protocol through an Internet-domain
+socket. The descriptors passed to a SSL UCSPI application are copies of
+that socket, dup()ed from a single connect() or accept().
+
+[address] consists of two arguments: [hostname] [port].
+
+There are three possibilities for [hostname]: the number 0, referring to
+the local host; a dotted-decimal IP address, such as 192.48.96.5; or a
+name understood by the system's resolver, such as mail.uu.net. SSL UCSPI
+servers use only the first IP address from the resolver; SSL UCSPI
+clients try each address in turn.
+
+There are three possibilities for [port]: a positive numeric TCP port
+number, such as 25; the number 0, which permits selection of any port
+number; or a name understood by the system's getservbyname(), such as
+smtp.
+
+The client and server set up the following environment variables:
+
+   PROTO: the string SSL
+   SSLLOCALIP: the dotted-decimal IP address of the local host
+   SSLLOCALPORT: the local SSL port number, in decimal
+   SSLREMOTEIP: the dotted-decimal IP address of the remote host
+   SSLREMOTEPORT: the remote SSL port number, in decimal
+   SSLLOCALHOST, if possible: the resolver's name for SSLLOCALIP
+   SSLREMOTEHOST, if possible: the resolver's name for SSLREMOTEIP
+   SSLREMOTEINFO, if possible: the result of a 931/1413/IDENT/TAP query
+
+Uppercase letters in SSLLOCALHOST and SSLREMOTEHOST are converted to
+lowercase. SSLREMOTEINFO is a connection-specific string supplied by the
+remote host via 931/1413/IDENT/TAP.
+
+SSL UCSPI tools take a -R option to turn off 931/1413/IDENT/TAP
+querying, and a -r option to turn it back on. SSL UCSPI tools take a -I
+option to turn off checking for a client certificate, and a -i option to
+turn it back on.  SSL UCSPI clients take a -p [locport] option to
+require a particular TCP port on the local side of the connection. SSL
+UCSPI servers take a -1 option to print the local port number (in
+decimal, followed by a newline) to descriptor 1 before closing
+descriptor 1 and after preparing to receive connections.  SSL UCSPI
+servers and clients take a -3 option to read a null-terminated key
+password from file descriptor 3.

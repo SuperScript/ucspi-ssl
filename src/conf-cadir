@@ -1,0 +1,4 @@
+/usr/local/ssl/certs
+
+This is the ucspi-ssl CA directory.
+An empty name means no certificate directory is compiled in.

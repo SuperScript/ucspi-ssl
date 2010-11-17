@@ -1,0 +1,10 @@
+#!/bin/sh -e
+test -d compile || ( echo 'Wrong working directory.'; exit 1 )
+here=`env - PATH=$PATH pwd`
+( echo ucspi-ssl-0.70
+  echo $here
+  if test -r compile/sysdeps
+  then
+    cat compile/sysdeps
+  fi
+) | mail web-inst@superscript.com

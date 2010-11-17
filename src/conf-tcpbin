@@ -1,0 +1,4 @@
+/usr/local/bin
+
+This is the ucspi-tcp bin directory.  The ucspi-tcp executables
+should appear in it.

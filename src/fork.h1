@@ -1,0 +1,9 @@
+#ifndef FORK_H
+#define FORK_H
+
+/* sysdep: -vfork */
+
+extern int fork();
+#define vfork fork
+
+#endif

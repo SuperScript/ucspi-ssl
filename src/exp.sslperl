@@ -1,0 +1,99 @@
+--- sslperl works
+sslperlHello, World! (1): here you are
+0
+sslperlHello, World! (2): here you are
+0
+sslperlHello, World! (1): here you are
+0
+sslperlHello, World! (2): here you are
+0
+--- sslperl prints usage message without enough arguments
+sslperl: usage: sslperl [ -13UXpPhHrRoOdDqQviIeEsS ] [ -c limit ] [ -x rules.cdb ] [ -B banner ] [ -g gid ] [ -u uid ] [ -b backlog ] [ -l localname ] [ -t timeout ] [ -T ssltimeout ] [ -w progtimeout ] [ -f lockfile ] host port program
+100
+--- sslperl prints error message with unknown port name
+sslperl: fatal: unable to figure out port number for nonexistentport
+111
+--- sslperl prints error message with unknown host name
+sslperl: fatal: no IP address for nonexistent.local.
+111
+--- sslperl prints error message with unresolvable host name
+sslperl: fatal: temporarily unable to figure out IP address for thislabelistoolongbecausednshasalimitof63charactersinasinglelabel.: protocol error
+111
+--- sslperl prints error message with non-local host name
+sslperl: fatal: unable to bind: ...
+111
+--- sslperl preserves environment
+sslperlchanged environment
+0
+--- sslperl handles larger requests
+sslclient: connected to 127.0.0.1 port 50022
+sslclient: ssl connect
+0
+--- sslserver -1v prints proper messages
+50022
+sslperl: cafile x xxx/ucspi.ca
+sslperl: ccafile x 
+sslperl: cadir x 
+sslperl: cert x xxx/127.0.0.1.cert
+sslperl: key x xxx/127.0.0.1.key
+sslperl: param x xxx
+sslperl: status: 0/1
+sslperl: status: 1/1
+sslperl: pid x from 127.0.0.1
+sslperl: ok x Localserver:127.0.0.1:50022 localhost:127.0.0.1::x
+sslperl: ssl x accept 
+log: Hello, World! (1): here you are
+sslperl: done ...
+sslperl: pid x from 127.0.0.1
+sslperl: ok x Localserver:127.0.0.1:50022 localhost:127.0.0.1::x
+sslperl: ssl x accept 
+log: Hello, World! (2): here you are
+sslperl: end x status 0
+sslperl: status: 0/1
+sslperl: status: 1/1
+sslperl: pid x from 127.0.0.1
+sslperl: ok x Localserver:127.0.0.1:50022 localhost:127.0.0.1::x
+sslperl: ssl x accept 
+log: Hello, World! (1): here you are
+sslperl: done ...
+sslperl: pid x from 127.0.0.1
+sslperl: ok x Localserver:127.0.0.1:50022 localhost:127.0.0.1::x
+sslperl: ssl x accept 
+log: Hello, World! (2): here you are
+sslperl: end x status 0
+sslperl: status: 0/1
+sslperl: status: 1/1
+sslperl: end x status 15
+sslperl: status: 0/1
+50022
+sslperl: cafile x xxx/ucspi.ca
+sslperl: ccafile x 
+sslperl: cadir x 
+sslperl: cert x xxx/127.0.0.1.cert
+sslperl: key x xxx/127.0.0.1.key
+sslperl: param x xxx
+sslperl: status: 0/1
+sslperl: status: 1/1
+sslperl: pid x from 127.0.0.1
+sslperl: ok x Localserver:127.0.0.1:50022 localhost:127.0.0.1::x
+sslperl: ssl x accept 
+log: NOW=
+log: changed environment
+sslperl: done ...
+sslperl: end x status 15
+sslperl: status: 0/1
+50022
+sslperl: cafile x xxx/ucspi.ca
+sslperl: ccafile x 
+sslperl: cadir x 
+sslperl: cert x xxx/127.0.0.1.cert
+sslperl: key x xxx/127.0.0.1.key
+sslperl: param x xxx
+sslperl: status: 0/1
+sslperl: status: 1/1
+sslperl: pid x from 127.0.0.1
+sslperl: ok x Localserver:127.0.0.1:50022 localhost:127.0.0.1::x
+sslperl: ssl x accept 
+sslperl: done ...
+sslperl: end x status 15
+sslperl: status: 0/1

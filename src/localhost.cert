@@ -1,0 +1,64 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 15 (0xf)
+        Signature Algorithm: md5WithRSAEncryption
+        Issuer: C=US, ST=New York, L=Brooklyn, O=ucspi-ssl research laboratory, CN=ucspi-ssl research ca
+        Validity
+            Not Before: Dec  8 00:39:42 2001 GMT
+            Not After : Dec  6 00:39:42 2011 GMT
+        Subject: C=US, ST=New York, O=ucspi-ssl research laboratory, CN=localhost
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+            RSA Public Key: (1024 bit)
+                Modulus (1024 bit):
+                    00:dc:6c:9f:f4:67:34:b0:10:fd:30:a6:da:4f:10:
+                    df:36:5b:d9:57:b2:59:43:25:1a:21:49:2f:69:f2:
+                    36:a0:6a:f9:17:6c:bd:84:3e:5d:c3:01:24:75:73:
+                    a6:2c:dd:0e:2d:59:10:f4:b9:03:bb:83:23:6a:35:
+                    0c:b5:ec:c3:59:71:61:7b:47:5e:df:63:29:0d:e7:
+                    e2:9d:e3:d2:e4:ad:76:1e:3d:a3:6a:b8:b2:f7:8f:
+                    cb:2b:76:00:57:65:76:98:55:ea:92:14:38:06:c0:
+                    8d:fb:5f:c5:17:28:d8:a1:44:73:ee:63:a6:37:be:
+                    1b:09:40:2f:9a:76:67:e2:77
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                OpenSSL Generated Certificate
+            X509v3 Subject Key Identifier: 
+                F8:7A:32:40:33:83:4E:00:A6:9E:CA:E8:10:A0:46:B9:EA:10:88:C1
+            X509v3 Authority Key Identifier: 
+                DirName:/C=US/ST=New York/L=Brooklyn/O=ucspi-ssl research laboratory/CN=ucspi-ssl research ca
+                serial:00
+
+    Signature Algorithm: md5WithRSAEncryption
+        4d:7b:d7:1e:65:11:10:29:3e:82:f8:52:17:8b:8a:9c:82:78:
+        c2:05:8b:01:13:43:c9:8a:96:54:83:e6:25:78:c7:73:a0:44:
+        1d:41:b4:8e:b7:a3:c6:da:7b:d1:dd:23:3e:2b:9e:81:98:5b:
+        8c:ed:72:fa:4f:69:d6:f5:1e:f3:a5:c1:c6:7a:d5:d8:97:b5:
+        a6:c8:09:4a:41:9e:19:4a:3b:6e:85:80:80:c3:cf:a0:85:a0:
+        3c:d3:71:53:75:18:bd:ba:a4:a9:a7:7d:39:4f:fa:ad:f9:2c:
+        d2:59:73:f7:15:8b:a4:fc:c4:bc:c5:cc:39:a7:ba:90:3a:42:
+        dd:a7
+-----BEGIN CERTIFICATE-----
+MIIDOzCCAqSgAwIBAgIBDzANBgkqhkiG9w0BAQQFADB7MQswCQYDVQQGEwJVUzER
+MA8GA1UECBMITmV3IFlvcmsxETAPBgNVBAcTCEJyb29rbHluMSYwJAYDVQQKEx11
+Y3NwaS1zc2wgcmVzZWFyY2ggbGFib3JhdG9yeTEeMBwGA1UEAxMVdWNzcGktc3Ns
+IHJlc2VhcmNoIGNhMB4XDTAxMTIwODAwMzk0MloXDTExMTIwNjAwMzk0MlowXDEL
+MAkGA1UEBhMCVVMxETAPBgNVBAgTCE5ldyBZb3JrMSYwJAYDVQQKEx11Y3NwaS1z
+c2wgcmVzZWFyY2ggbGFib3JhdG9yeTESMBAGA1UEAxMJbG9jYWxob3N0MIGfMA0G
+CSqGSIb3DQEBAQUAA4GNADCBiQKBgQDcbJ/0ZzSwEP0wptpPEN82W9lXsllDJRoh
+SS9p8jagavkXbL2EPl3DASR1c6Ys3Q4tWRD0uQO7gyNqNQy17MNZcWF7R17fYykN
+5+Kd49LkrXYePaNquLL3j8srdgBXZXaYVeqSFDgGwI37X8UXKNihRHPuY6Y3vhsJ
+QC+admfidwIDAQABo4HtMIHqMAkGA1UdEwQCMAAwLAYJYIZIAYb4QgENBB8WHU9w
+ZW5TU0wgR2VuZXJhdGVkIENlcnRpZmljYXRlMB0GA1UdDgQWBBT4ejJAM4NOAKae
+yugQoEa56hCIwTCBjwYDVR0jBIGHMIGEoX+kfTB7MQswCQYDVQQGEwJVUzERMA8G
+A1UECBMITmV3IFlvcmsxETAPBgNVBAcTCEJyb29rbHluMSYwJAYDVQQKEx11Y3Nw
+aS1zc2wgcmVzZWFyY2ggbGFib3JhdG9yeTEeMBwGA1UEAxMVdWNzcGktc3NsIHJl
+c2VhcmNoIGNhggEAMA0GCSqGSIb3DQEBBAUAA4GBAE171x5lERApPoL4UheLipyC
+eMIFiwETQ8mKllSD5iV4x3OgRB1BtI63o8bae9HdIz4rnoGYW4ztcvpPadb1HvOl
+wcZ61diXtabICUpBnhlKO26FgIDDz6CFoDzTcVN1GL26pKmnfTlP+q35LNJZc/cV
+i6T8xLzFzDmnupA6Qt2n
+-----END CERTIFICATE-----

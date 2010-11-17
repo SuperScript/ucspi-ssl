@@ -1,0 +1,5 @@
+/package/host/superscript.com/command
+/usr/local/bin
+
+Directories to soft link commands into, one per line.
+The first empty line terminates the list.

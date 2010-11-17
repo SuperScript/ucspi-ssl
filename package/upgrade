@@ -1,0 +1,109 @@
+#!/bin/sh
+shout() { echo "upgrade: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+safe() { "$@" || barf "cannot $@"; }
+
+umask 022
+[ -d package ] || barf "no package directory"
+[ -d src     ] || barf "no src directory"
+
+for i in `sed -e '/^it-/!d' -e 's/^it-//' < compile/it=d`
+do
+  all="$all $i"
+done
+usage() { shout "usage: package/upgrade [ [-]$all ]"; exit 100; }
+targets=""
+if [ $# -eq 0 ]
+then
+  for i in $all
+  do
+    targets="$all"
+  done
+else
+  if [ "$1" = "-" ]
+  then
+    shift
+    suppress=":"
+    for i in ${1+"$@"}
+    do
+      case "$all " in
+	*\ $i\ *)
+	  ;;
+	*)
+	  usage
+	  ;;
+      esac
+      suppress="$suppress$i:"
+    done
+    for i in $all
+    do
+      case "$suppress" in
+	*:$i:*)
+	  ;;
+	*)
+	  targets="$targets $i"
+	  ;;
+      esac
+    done
+  else
+    for i in ${1+"$@"}
+    do
+      case "$all " in
+	*\ $i\ *)
+	  ;;
+	*)
+	  usage
+	  ;;
+      esac
+      targets="$targets $i"
+    done
+  fi
+fi
+
+[ "X$targets" = "X" ] && barf "no targets"
+
+version="`head -1 package/version`"
+here="`pwd`"
+command="`echo $here | sed -e 's/-'$version'$//'`/command"
+package="`basename $here | sed -e 's/-'$version'$//'`"
+echo "symlink $package -> $package-$version"
+safe rm -f $package
+safe ln -s $package-$version $package
+safe mv -f $package ..
+
+commands=
+for i in $targets
+do
+  commands="$commands `cat package/commands-$i`"
+done
+
+if [ -r package/command-cp ]
+then
+  for i in `sed -e '/^$/q' < package/command-cp`
+  do
+    echo "copying commands into $i"
+      safe mkdir -p $i
+    for j in $commands
+    do
+      safe rm -f $i/$j'{new}'
+      safe cp -p command/$j $i/$j'{new}'
+      safe mv -f $i/$j'{new}' $i/$j
+    done
+  done
+fi
+
+if [ -r package/command-ln ]
+then
+  for i in `sed -e '/^$/q' < package/command-ln`
+  do
+    echo "linking commands into $i"
+    safe mkdir -p $i
+    for j in $commands
+    do
+      safe rm -f $i/$j'{new}'
+      safe ln -s $command/$j $i/$j'{new}'
+      safe mv -f $i/$j'{new}' $i/$j
+    done
+  done
+fi
+

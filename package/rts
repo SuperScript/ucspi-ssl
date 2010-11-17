@@ -1,0 +1,74 @@
+#!/bin/sh
+shout() { echo "rts: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+safe() { "$@" || barf "cannot $@"; }
+
+umask 022
+[ -d package ] || barf "no package directory"
+[ -d src     ] || barf "no src directory"
+[ -d compile ] || barf "no compile directory"
+
+for i in `sed -e '/^it-/!d' -e 's/^it-//' < compile/it=d`
+do
+  all="$all $i"
+done
+usage() { shout "usage: package/rts [ [-]$all ]"; exit 100; }
+
+targets=""
+if [ $# -eq 0 ]
+then
+  targets="$all"
+else
+  if [ "$1" = "-" ]
+  then
+    shift
+    suppress=":"
+    for i in ${1+"$@"}
+    do
+      case "$all " in
+	*\ $i\ *)
+	  ;;
+	*)
+	  usage
+	  ;;
+      esac
+      suppress="$suppress$i:"
+    done
+    for i in $all
+    do
+      case "$suppress" in
+	*:$i:*)
+	  ;;
+	*)
+	  targets="$targets $i"
+	  ;;
+      esac
+    done
+  else
+    for i in ${1+"$@"}
+    do
+      case "$all " in
+	*\ $i\ *)
+	  ;;
+	*)
+	  usage
+	  ;;
+      esac
+      targets="$targets $i"
+    done
+  fi
+fi
+
+[ "X$all" != "X" ] && [ "X$targets" = "X" ] && usage
+
+here=`env - PATH=$PATH pwd`
+safe cd compile
+PATH="$here/compile:/command:$PATH"
+export PATH
+. $here/compile/rts.it > $here/compile/out.it 2>&1 
+cat -v $here/compile/out.it | diff - $here/compile/exp.it
+for i in $targets
+do
+  . $here/compile/rts.$i 2>&1 | cat -v > $here/compile/out.$i
+  diff $here/compile/out.$i $here/compile/exp.$i
+done

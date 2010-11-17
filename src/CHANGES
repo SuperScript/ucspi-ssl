@@ -1,0 +1,71 @@
+20011209
+	Initial release.
+	version: 0.50
+
+20021207
+	Convert to new build project.
+	Update libraries.
+	Correct load ordering for ssl programs.
+
+20030118
+	Option to set TCP environment variables.
+	Option to set SSL environment variables a la mod_perl.
+	Added sslperl.
+	Correct closure handling in ssl_io.c.
+
+20030128
+	Correct setting of TCPREMOTEINFO.
+
+20040127
+	Improved env tracking in handlers.
+	Updated tests.
+
+20040204
+	Clean up signal handling, process usage.
+
+20040209
+	Added nN options to sslclient.
+
+20040313
+	Added conf-ssl.
+	Version 0.65.
+
+20040317
+	Delete conf-home.
+	Permit nN opts in sslclient.
+	Version 0.66.
+
+20040320
+	Allow sslclient to avoid server verification.
+	Support cipher selection.
+	Correct execution botch in sslperl.
+	Clean up ssl_io and signal interaction.
+	Version 0.67.
+
+20040502
+	Read SSL setup info before dropping privilege.
+	Version 0.68.
+
+20050417
+	Don't fail on setsid if already group leader (Gabriel Russell).
+	Add compatibility macros for older Perl.
+	Don't leak pointer returned from eval_pv.
+	Support for partial testing.
+	Remove dependency on daemontools from rts.
+
+20050515
+	Partial-install bug fix in package/upgrade.
+
+20050605
+	Don't lose file descriptors in sslclient (Paul Jarc).
+
+20050610
+	Close socket for deny rule (Fred Lindberg).
+
+20050703
+	Revise ssl_io.
+	Free ssl object in sslhandle.c.
+	Add progtimeout option.
+
+20050717
+	Version 0.70.

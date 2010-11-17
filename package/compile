@@ -1,0 +1,89 @@
+#!/bin/sh
+shout() { echo "compile: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+safe() { "$@" || barf "cannot $@"; }
+umask 022
+[ -d package ] || barf "no package directory"
+[ -d src     ] || barf "no src directory"
+
+here=`env - PATH=$PATH pwd`
+
+safe mkdir -p compile command
+[ -r compile/home ] || echo $here > compile/home
+[ -h compile/src  ] || safe ln -s $here/src compile/src
+
+for i in `ls src`
+do
+  [ -h compile/$i ] || safe ln -s src/$i compile/$i
+done
+
+for i in `sed -e '/^it-/!d' -e 's/^it-//' < compile/it=d`
+do
+  all="$all $i"
+done
+other="`grep -v '^it-' compile/it=d`"
+usage() { shout "usage: package/rts [ [-]$all ]"; exit 100; }
+targets=""
+if [ $# -eq 0 ]
+then
+  targets="$all"
+else
+  if [ "$1" = "-" ]
+  then
+    shift
+    suppress=":"
+    for i in ${1+"$@"}
+    do
+      case "$all " in
+	*\ $i\ *)
+	  ;;
+	*)
+	  usage
+	  ;;
+      esac
+      suppress="$suppress$i:"
+    done
+    for i in $all
+    do
+      case "$suppress" in
+	*:$i:*)
+	  ;;
+	*)
+	  targets="$targets $i"
+	  ;;
+      esac
+    done
+  else
+    for i in ${1+"$@"}
+    do
+      case "$all " in
+	*\ $i\ *)
+	  ;;
+	*)
+	  usage
+	  ;;
+      esac
+      targets="$targets $i"
+    done
+  fi
+fi
+
+[ "X$all" != "X" ] && [ "X$targets" = "X" ] && usage
+
+commands=
+for i in $targets
+do
+  commands="$commands `cat package/commands-$i`"
+done
+
+safe cd compile
+safe make $other `echo "$targets" | sed -e 's/ / it-/g'`
+safe cd $here
+
+for i in $commands
+do
+  safe rm -f command/$i'{new}'
+  safe cp -p compile/$i command/$i'{new}'
+  safe mv -f command/$i'{new}' command/$i
+done
+

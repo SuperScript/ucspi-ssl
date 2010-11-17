@@ -1,0 +1,3 @@
+/usr/local/ssl/pem/dh1024.pem
+
+This is the sslserver DH parameter file.

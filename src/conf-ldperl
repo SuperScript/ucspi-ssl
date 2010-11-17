@@ -1,0 +1,7 @@
+auto
+
+The loader arguments required for tcpperl.
+All arguments must appear on a single line.
+If the word "auto" appears, use the output from
+
+  `head -1 conf-perl` -MExtUtils::Embed -e ldopts
