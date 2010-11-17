@@ -3,3 +3,7 @@ Options for looser verification.
 Program like stunnel.
 Rules tests.
 SSL connection cacheing.
+TLS patches or programs.
+Term function.
+Avoidance of SSLv2
+Improved privilege management.

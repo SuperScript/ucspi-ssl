@@ -6,4 +6,4 @@ then
   shift; shift
   args="$@"
 fi
-exec HOME/command/sslclient -RHl0 $args -- $host $port TCPBIN/mconnect-io
+exec #HOME#/command/sslclient -RHl0 $args -- $host $port #HOME#/command/connect-io 3600 6 7

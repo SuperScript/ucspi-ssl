@@ -117,8 +117,7 @@ events:
 	  if (errno == error_connreset  && rightstatus == -1) goto done;
 	  goto bomb;
 	case SSL_ERROR_SSL:
-	  if (errno == error_again || errno == error_intr) break;
-	  if (!errno) break;
+	  if (errno == error_again || errno == error_intr || !errno) break;
 	  goto bomb;
 	default:
 	  close(fdleft);

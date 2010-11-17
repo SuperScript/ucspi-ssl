@@ -69,3 +69,24 @@
 
 20050717
 	Version 0.70.
+
+20070224
+	Update to new parts and testing convention.
+
+20070226
+	Rewrite ssl_io again.
+	Detect errno == 0 in SSL_ERROR_SSL case (Stefan Krah).
+
+20080123
+	Double quotes for TARGET substitution (presently not used).
+
+20080210
+	Use iopause_proxy.
+	Use private addcr, delcr, and connect-io.
+	Version 0.70.1.
+
+20080211
+	Add () around args to barf in makeinclude.sh (Peter Conrad).
+	Version 0.70.2.
+
+

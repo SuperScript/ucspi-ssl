@@ -1,7 +1,7 @@
 /* Public domain. */
 
-#include <errno.h>
 #include "error.h"
+#include <errno.h>
 
 #define X(e,s) if (i == e) return s;
 
@@ -28,6 +28,7 @@ const char *error_str(int i)
   X(error_notdir,"not a directory")
   X(error_rofs,"read-only file system")
   X(error_connreset,"connection reset")
+  X(error_notsock,"file descriptor not a socket")
 #ifdef ESRCH
   X(ESRCH,"no such process")
 #endif
@@ -93,9 +94,6 @@ const char *error_str(int i)
 #endif
 #ifdef EALREADY
   X(EALREADY,"operation already in progress")
-#endif
-#ifdef ENOTSOCK
-  X(ENOTSOCK,"not a socket")
 #endif
 #ifdef EDESTADDRREQ
   X(EDESTADDRREQ,"destination address required")

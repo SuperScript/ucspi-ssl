@@ -1,7 +1,7 @@
 /* Public domain. */
 
-#include <errno.h>
 #include "error.h"
+#include <errno.h>
 
 /* warning: as coverage improves here, should update error_{str,temp} */
 
@@ -143,4 +143,11 @@ int error_connreset =
 ECONNRESET;
 #else
 -20;
+#endif
+
+int error_notsock =
+#ifdef ENOTSOCK
+ENOTSOCK;
+#else
+-21;
 #endif

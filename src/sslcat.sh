@@ -6,4 +6,4 @@ then
   shift; shift
   args="$@"
 fi
-exec HOME/command/sslclient -RHl0 $args -- "$host" "$port" sh -c 'exec cat <&6'
+exec #HOME#/command/sslclient -RHl0 $args -- "$host" "$port" sh -c 'exec cat <&6'

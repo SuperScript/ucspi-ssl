@@ -1,4 +1,20 @@
-#!/bin/sh -e
-package/compile ${1+"$@"}
-package/upgrade ${1+"$@"}
-package/run ${1+"$@"}
+#!/bin/sh
+shout() { echo "install: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+safe() { "$@" || barf "cannot $@"; }
+usage() {
+  shout "\
+usage: package/install [ [-]part ... ]
+available subprojects:
+`package/parts list < src/it=d`"
+  exit 100
+}
+####
+[ -d src ] || barf "no src directory"
+#
+[ "$1" = "--help" ] && usage
+#
+safe package/compile ${1+"$@"}
+safe package/upgrade ${1+"$@"}
+safe package/run ${1+"$@"}
+exit 0

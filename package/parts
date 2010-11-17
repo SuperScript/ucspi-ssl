@@ -1,0 +1,51 @@
+#!/bin/sh
+shout() { echo "parts: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+usage() { shout "usage: package/parts target|list [ [-]part ... ]"; exit 100; }
+[ $# -lt 1 ] && usage
+request="$1"
+shift
+case "$request" in
+  target|list)
+    ;;
+  *)
+    barf "unknown request: $request"
+    ;;
+esac
+exec awk -v "request=$request" '
+BEGIN {
+  all = 1
+  want[""] = 1
+
+  if (ARGC > 1) {
+    for (i = 1;i < ARGC;++i) {
+      targ = ARGV[i]
+      if (targ == "-") {
+	all = 0
+      }
+      else if (targ ~ /^-/) {
+	want[substr(targ,2)] = -1
+      }
+      else {
+	all = 0
+	want[targ] = 1
+      }
+    }
+    ARGC = 1
+  }
+}
+{
+  if (!$1) next
+
+  if (want[$2] < 0) next
+  if (request == "target") {
+    if (want[$2] == 1 || all) print $1
+  }
+  else {
+    if (seen[$2]) next
+    if (want[$2] == 1 || all) print $2
+    seen[$2] = 1
+  }
+  next;
+}
+' ${1+"$@"}

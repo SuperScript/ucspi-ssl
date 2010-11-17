@@ -2,73 +2,38 @@
 shout() { echo "rts: $@" >&2; }
 barf() { shout "fatal: $@"; exit 111; }
 safe() { "$@" || barf "cannot $@"; }
-
+usage() {
+  shout "\
+usage: package/rts [ [-]part ... ]
+available parts:
+`package/parts list < compile/it=d`"
+  exit 100
+}
+####
 umask 022
 [ -d package ] || barf "no package directory"
-[ -d src     ] || barf "no src directory"
 [ -d compile ] || barf "no compile directory"
-
-for i in `sed -e '/^it-/!d' -e 's/^it-//' < compile/it=d`
-do
-  all="$all $i"
-done
-usage() { shout "usage: package/rts [ [-]$all ]"; exit 100; }
-
-targets=""
-if [ $# -eq 0 ]
-then
-  targets="$all"
-else
-  if [ "$1" = "-" ]
-  then
-    shift
-    suppress=":"
-    for i in ${1+"$@"}
-    do
-      case "$all " in
-	*\ $i\ *)
-	  ;;
-	*)
-	  usage
-	  ;;
-      esac
-      suppress="$suppress$i:"
-    done
-    for i in $all
-    do
-      case "$suppress" in
-	*:$i:*)
-	  ;;
-	*)
-	  targets="$targets $i"
-	  ;;
-      esac
-    done
-  else
-    for i in ${1+"$@"}
-    do
-      case "$all " in
-	*\ $i\ *)
-	  ;;
-	*)
-	  usage
-	  ;;
-      esac
-      targets="$targets $i"
-    done
-  fi
-fi
-
-[ "X$all" != "X" ] && [ "X$targets" = "X" ] && usage
-
-here=`env - PATH=$PATH pwd`
-safe cd compile
+here="`env - PATH=$PATH pwd`"
 PATH="$here/compile:/command:$PATH"
 export PATH
-. $here/compile/rts.it > $here/compile/out.it 2>&1 
-cat -v $here/compile/out.it | diff - $here/compile/exp.it
-for i in $targets
+#
+[ "$1" = "--help" ] && usage
+#
+targets="`package/parts list ${1+"$@"} < compile/it=d`"
+#
+safe cd compile
+result=0
+for i in default $targets
 do
-  . $here/compile/rts.$i 2>&1 | cat -v > $here/compile/out.$i
-  diff $here/compile/out.$i $here/compile/exp.$i
+  echo "running tests for $i"
+  rts="./$i:test"
+  [ -f "$rts" ] || continue
+  out="./$i:out"
+  exp="./$i:exp"
+  $rts 2>&1 | cat -v - > $out
+  diff $out $exp || {
+    shout "tests failed: $rts"
+    result=111
+  }
 done
+exit $result

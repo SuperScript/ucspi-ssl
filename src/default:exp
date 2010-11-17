@@ -1413,7 +1413,7 @@ sslclient: ssl connect
 --- sslserver times out
 sslclient: connected to 127.0.0.1 port 50013
 sslclient: ssl connect
-bannerhereur^M
+bannerhereur
 0
 sslclient: connected to 127.0.0.1 port 50013
 sslclient: ssl connect

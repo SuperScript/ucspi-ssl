@@ -24,6 +24,7 @@ extern int error_isdir;
 extern int error_connrefused;
 extern int error_notdir;
 extern int error_rofs;
+extern int error_notsock;
 extern int error_connreset;
 
 extern const char *error_str(int);

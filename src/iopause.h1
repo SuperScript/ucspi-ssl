@@ -17,5 +17,6 @@ typedef struct {
 #include "taia.h"
 
 extern void iopause(iopause_fd *,unsigned int,struct taia *,struct taia *);
+extern int iopause_proxy(int,int,int,int,unsigned int);
 
 #endif

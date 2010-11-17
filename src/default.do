@@ -17,28 +17,28 @@ fi
 
 if test -r $1=s
 then
-  dependon $1=s home
+  dependon $1=s makeinclude makescrip
   scripts=`cat $1=s`
-  if test "X$scripts" = "X"
+  if [ "X$scripts" = "X" ]
   then
     scripts="warn-auto.sh $1.sh"
   fi
-  dependon $scripts
+  dependon `./makeinclude deps $scripts`
   formake rm -f $1
-  formake cat $scripts '\'
-  formake '| sed s}HOME}"`head -1 home`"}g \'
+  formake ./makeinclude code $scripts '\'
+  formake '| ./makescrip' "$@" '\'
   formake '>' $1
   formake chmod 755 $1
   rm -f $1
-  cat $scripts \
-  | sed s}HOME}"`head -1 home`"}g
+  ./makeinclude code $scripts \
+  | ./makescrip "$@"
   chmod 755 $3
   exit 0
 fi
 
 case $1 in
   compile)
-    dependon conf-cc conf-ssl print-cc.sh systype warn-auto.sh
+    dependon conf-cc print-cc.sh systype warn-auto.sh
     formake rm -f compile
     formake 'sh print-cc.sh > compile'
     formake "chmod 755 compile"
@@ -47,8 +47,9 @@ case $1 in
     chmod 755 $3
     exit 0
     ;;
-  it|it-*)
-    dependon $1=d `cat $1=d` sysdeps
+  it)
+    dependon $1=d sysdeps
+    dependon `awk '{ print $1; }' <$1=d`
     directtarget
     exit 0
     ;;
@@ -82,20 +83,35 @@ case $1 in
     chmod 755 $3
     exit 0
     ;;
+  makeinclude)
+    dependon makeinclude.sh warn-auto.sh
+    formake rm -f makeinclude
+    formake 'cat warn-auto.sh makeinclude.sh > makeinclude'
+    formake "chmod 755 makeinclude"
+    rm -f makeinclude
+    cat warn-auto.sh makeinclude.sh
+    chmod 755 $3
+    exit 0
+    ;;
+  makescrip)
+    dependon warn-auto.sh print-makescrip.sh conf-scrip
+    dependon `sed -e '/^$/q' -e '/^dep#/!d' -e 's/^dep#//' < conf-scrip`
+    formake rm -f makescrip
+    formake 'sh print-makescrip.sh < conf-scrip > makescrip'
+    formake "chmod 755 makescrip"
+    rm -f makescrip
+    sh print-makescrip.sh < conf-scrip
+    chmod 755 $3
+    exit 0
+    ;;
   sysdeps)
-    dependon systype compile load `grep -l sysdep *.h || exit 0`
+    dependon systype compile load `grep -l sysdep *.h 2>/dev/null || exit 0`
     formake 'rm -f sysdeps'
     formake 'cat systype compile load >> sysdeps'
-    for i in `grep -l sysdep *.h || exit 0`
-    do
-      formake "grep sysdep $i >> sysdeps"
-    done
+    formake 'grep sysdep *.h 2>/dev/null >> sysdeps || :'
     rm -f sysdeps
     cat systype compile load
-    for i in `grep -l sysdep *.h || exit 0`
-    do
-      grep sysdep $i
-    done
+    grep sysdep *.h 2>/dev/null || :
     exit 0
     ;;
   systype)

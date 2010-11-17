@@ -5,20 +5,21 @@ SHELL=/bin/sh
 default: it
 
 clean:
-	rm -f alloc.o alloc_re.o auto-str auto-str.o auto_cadir.c auto_cadir.o \
-	auto_cafile.c auto_cafile.o auto_ccafile.c auto_ccafile.o \
+	rm -f addcr addcr.o alloc.o alloc_re.o auto-str auto-str.o auto_cadir.c \
+	auto_cadir.o auto_cafile.c auto_cafile.o auto_ccafile.c auto_ccafile.o \
 	auto_certfile.c auto_certfile.o auto_ciphers.c auto_ciphers.o \
 	auto_dhfile.c auto_dhfile.o auto_keyfile.c auto_keyfile.o buffer.o \
 	buffer_0.o buffer_1.o buffer_2.o buffer_copy.o buffer_get.o buffer_put.o \
 	buffer_read.o buffer_write.o byte_chr.o byte_copy.o byte_cr.o \
 	byte_diff.o byte_zero.o case_diffb.o case_diffs.o ccperl cdb.a cdb.o \
-	cdb_hash.o cdb_make.o chkshsgr chkshsgr.o choose coe.o compile dns_dfd.o \
-	dns_domain.o dns_dtda.o dns_ip.o dns_ipq.o dns_name.o dns_nd.o \
-	dns_packet.o dns_random.o dns_rcip.o dns_rcrw.o dns_resolve.o \
-	dns_sortip.o dns_transmit.o dns_txt.o env.o error.o error_str.o \
-	fd_copy.o fd_move.o fmt_ulong.o getln.o getln2.o hasflock.h hassgact.h \
-	hassgprm.h hasshsgr.h haswaitp.h https@ iopause.h iopause.o ip4_fmt.o \
-	ip4_scan.o it it-base it-sslperl load lock_ex.o lock_un.o makelib \
+	cdb_hash.o cdb_make.o chkshsgr chkshsgr.o choose coe.o compile \
+	connect-io connect-io.o delcr delcr.o dns_dfd.o dns_domain.o dns_dtda.o \
+	dns_ip.o dns_ipq.o dns_name.o dns_nd.o dns_packet.o dns_random.o \
+	dns_rcip.o dns_rcrw.o dns_resolve.o dns_sortip.o dns_transmit.o \
+	dns_txt.o env.o error.o error_str.o fd_copy.o fd_move.o fd_shutdown.o \
+	fmt_ulong.o getln.o getln2.o hasflock.h hassgact.h hassgprm.h hasshsgr.h \
+	haswaitp.h https@ iopause.h iopause.o iopause_proxy.o ip4_fmt.o \
+	ip4_scan.o it load lock_ex.o lock_un.o makeinclude makelib makescrip \
 	ndelay_off.o ndelay_on.o open_append.o open_read.o open_trunc.o \
 	openreadclose.o pathexec_env.o pathexec_run.o perlembed.lib prot.o \
 	readclose.o remoteinfo.o rules.o scan_uint.o scan_ulong.o seek_set.o \
@@ -37,6 +38,12 @@ clean:
 	taia_pack.o taia_sub.o taia_uint.o timeoutconn.o uint16_pack.o \
 	uint16_unpack.o uint32.h uint32_pack.o uint32_unpack.o uint64.h unix.a \
 	wait_nohang.o wait_pid.o
+
+addcr: load addcr.o unix.a
+	./load addcr unix.a 
+
+addcr.o: compile addcr.c buffer.h exit.h
+	./compile addcr.c
 
 alloc.o: compile alloc.c alloc.h error.h
 	./compile alloc.c
@@ -163,20 +170,33 @@ chkshsgr: load chkshsgr.o
 chkshsgr.o: compile chkshsgr.c exit.h
 	./compile chkshsgr.c
 
-choose: home warn-auto.sh choose.sh
+choose: makeinclude makescrip warn-auto.sh choose.sh
 	rm -f choose
-	cat warn-auto.sh choose.sh \
-	| sed s}HOME}"`head -1 home`"}g \
+	./makeinclude code warn-auto.sh choose.sh \
+	| ./makescrip choose choose choose.tmp \
 	> choose
 	chmod 755 choose
 
 coe.o: compile coe.c coe.h
 	./compile coe.c
 
-compile: conf-cc conf-ssl print-cc.sh systype warn-auto.sh
+compile: conf-cc print-cc.sh systype warn-auto.sh
 	rm -f compile
 	sh print-cc.sh > compile
 	chmod 755 compile
+
+connect-io: load connect-io.o unix.a
+	./load connect-io unix.a 
+
+connect-io.o: compile connect-io.c exit.h iopause.h strerr.h scan.h \
+ndelay.h sig.h taia.h tai.h uint64.h
+	./compile connect-io.c
+
+delcr: load delcr.o unix.a
+	./load delcr unix.a 
+
+delcr.o: compile delcr.c buffer.h exit.h
+	./compile delcr.c
 
 dns_dfd.o: compile dns_dfd.c error.h alloc.h byte.h dns.h stralloc.h \
 iopause.h taia.h gen_alloc.h taia.h tai.h tai.h uint64.h uint64.h
@@ -263,6 +283,9 @@ fd_copy.o: compile fd_copy.c fd.h
 fd_move.o: compile fd_move.c fd.h
 	./compile fd_move.c
 
+fd_shutdown.o: compile fd_shutdown.c fd.h error.h
+	./compile fd_shutdown.c
+
 fmt_ulong.o: compile fmt_ulong.c fmt.h
 	./compile fmt_ulong.c
 
@@ -289,11 +312,10 @@ warn-shsgr
 haswaitp.h: choose compile load trywaitp.c haswaitp.h1 haswaitp.h2
 	./choose cl trywaitp haswaitp.h1 haswaitp.h2 >haswaitp.h
 
-https@: home warn-auto.sh https@.sh
+https@: makeinclude makescrip warn-auto.sh https@.sh
 	rm -f https@
-	cat warn-auto.sh https@.sh \
-	| sed s}HOME}"`head -1 home`"}g \
-	| sed s}TCPBIN}"`head -1 conf-tcpbin`"}g \
+	./makeinclude code warn-auto.sh https@.sh \
+	| ./makescrip https@ https@ https@.tmp \
 	> https@
 	chmod 755 https@
 
@@ -304,17 +326,18 @@ iopause.o: compile iopause.c taia.h select.h iopause.h tai.h taia.h \
 uint64.h tai.h uint64.h
 	./compile iopause.c
 
+iopause_proxy.o: compile iopause_proxy.c iopause.h buffer.h fd.h error.h \
+taia.h tai.h uint64.h
+	./compile iopause_proxy.c
+
 ip4_fmt.o: compile ip4_fmt.c fmt.h ip4.h
 	./compile ip4_fmt.c
 
 ip4_scan.o: compile ip4_scan.c scan.h ip4.h
 	./compile ip4_scan.c
 
-it: it-base it-sslperl sysdeps
-
-it-base: sslclient sslserver https@ sslcat sslconnect sslprint sysdeps
-
-it-sslperl: sslperl sysdeps
+it: sysdeps sslclient sslserver https@ sslcat sslconnect sslprint \
+connect-io addcr delcr sslperl
 
 load: conf-ld print-ld.sh systype warn-auto.sh
 	rm -f load
@@ -327,10 +350,20 @@ lock_ex.o: compile lock_ex.c hasflock.h lock.h
 lock_un.o: compile lock_un.c hasflock.h lock.h
 	./compile lock_un.c
 
+makeinclude: makeinclude.sh warn-auto.sh
+	rm -f makeinclude
+	cat warn-auto.sh makeinclude.sh > makeinclude
+	chmod 755 makeinclude
+
 makelib: print-ar.sh systype warn-auto.sh
 	rm -f makelib
 	sh print-ar.sh > makelib
 	chmod 755 makelib
+
+makescrip: warn-auto.sh print-makescrip.sh conf-scrip home conf-tcpbin
+	rm -f makescrip
+	sh print-makescrip.sh < conf-scrip > makescrip
+	chmod 755 makescrip
 
 ndelay_off.o: compile ndelay_off.c ndelay.h
 	./compile ndelay_off.c
@@ -474,8 +507,8 @@ stralloc.h gen_alloc.h gen_alloc.h
 ssl_error.o: compile ssl_error.c ssl.h stralloc.h gen_alloc.h
 	./compile ssl_error.c
 
-ssl_io.o: compile ssl_io.c iopause.h buffer.h taia.h ssl.h strerr.h \
-error.h sig.h taia.h tai.h stralloc.h tai.h uint64.h gen_alloc.h uint64.h
+ssl_io.o: compile ssl_io.c iopause.h buffer.h taia.h ssl.h error.h taia.h \
+tai.h stralloc.h tai.h uint64.h gen_alloc.h uint64.h
 	./compile ssl_io.c
 
 ssl_new.o: compile ssl_new.c ssl.h ndelay.h stralloc.h gen_alloc.h
@@ -496,10 +529,10 @@ ssl_verify.o: compile ssl_verify.c ssl.h case.h strerr.h stralloc.h \
 gen_alloc.h
 	./compile ssl_verify.c
 
-sslcat: home warn-auto.sh sslcat.sh
+sslcat: makeinclude makescrip warn-auto.sh sslcat.sh
 	rm -f sslcat
-	cat warn-auto.sh sslcat.sh \
-	| sed s}HOME}"`head -1 home`"}g \
+	./makeinclude code warn-auto.sh sslcat.sh \
+	| ./makescrip sslcat sslcat sslcat.tmp \
 	> sslcat
 	chmod 755 sslcat
 
@@ -517,11 +550,10 @@ stralloc.h uint16.h stralloc.h iopause.h taia.h gen_alloc.h gen_alloc.h \
 gen_alloc.h gen_alloc.h taia.h tai.h tai.h uint64.h uint64.h
 	./compile sslclient.c
 
-sslconnect: home warn-auto.sh sslconnect.sh
+sslconnect: makeinclude makescrip warn-auto.sh sslconnect.sh
 	rm -f sslconnect
-	cat warn-auto.sh sslconnect.sh \
-	| sed s}HOME}"`head -1 home`"}g \
-	| sed s}TCPBIN}"`head -1 conf-tcpbin`"}g \
+	./makeinclude code warn-auto.sh sslconnect.sh \
+	| ./makescrip sslconnect sslconnect sslconnect.tmp \
 	> sslconnect
 	chmod 755 sslconnect
 
@@ -627,18 +659,10 @@ strerr_sys.o: compile strerr_sys.c error.h strerr.h
 subgetopt.o: compile subgetopt.c subgetopt.h
 	./compile subgetopt.c
 
-sysdeps: systype compile load hasflock.h hassgact.h hassgprm.h hasshsgr.h \
-haswaitp.h iopause.h select.h uint64.h
+sysdeps: systype compile load
 	rm -f sysdeps
 	cat systype compile load >> sysdeps
-	grep sysdep hasflock.h >> sysdeps
-	grep sysdep hassgact.h >> sysdeps
-	grep sysdep hassgprm.h >> sysdeps
-	grep sysdep hasshsgr.h >> sysdeps
-	grep sysdep haswaitp.h >> sysdeps
-	grep sysdep iopause.h >> sysdeps
-	grep sysdep select.h >> sysdeps
-	grep sysdep uint64.h >> sysdeps
+	grep sysdep *.h 2>/dev/null >> sysdeps || :
 
 systype: find-systype.sh trycpp.c x86cpuid.c
 	sh find-systype.sh > systype
@@ -694,9 +718,9 @@ uint64.h: choose compile load tryulong64.c uint64.h1 uint64.h2
 
 unix.a: makelib alloc.o alloc_re.o buffer.o buffer_0.o buffer_1.o \
 buffer_2.o buffer_get.o buffer_put.o buffer_copy.o buffer_read.o \
-buffer_write.o env.o error.o error_str.o fd_copy.o fd_move.o fmt_ulong.o \
-getln.o getln2.o socket_accept.o socket_bind.o socket_conn.o \
-socket_delay.o socket_listen.o socket_local.o socket_opts.o \
+buffer_write.o env.o error.o error_str.o fd_copy.o fd_move.o \
+fd_shutdown.o fmt_ulong.o getln.o getln2.o socket_accept.o socket_bind.o \
+socket_conn.o socket_delay.o socket_listen.o socket_local.o socket_opts.o \
 socket_remote.o socket_tcp.o socket_udp.o ndelay_on.o ndelay_off.o \
 open_append.o open_read.o open_trunc.o openreadclose.o pathexec_env.o \
 pathexec_run.o prot.o readclose.o seek_set.o sgetopt.o sig.o sig_block.o \
@@ -706,32 +730,32 @@ stralloc_eady.o stralloc_opyb.o stralloc_opys.o stralloc_pend.o \
 strerr_die.o strerr_sys.o subgetopt.o wait_nohang.o wait_pid.o byte_chr.o \
 byte_copy.o byte_cr.o byte_diff.o byte_zero.o case_diffb.o case_diffs.o \
 ip4_fmt.o ip4_scan.o scan_ulong.o scan_uint.o uint16_pack.o \
-uint16_unpack.o uint32_pack.o uint32_unpack.o iopause.o tai_pack.o \
-taia_add.o taia_approx.o taia_frac.o taia_less.o taia_now.o taia_pack.o \
-taia_sub.o taia_uint.o dns_dfd.o dns_domain.o dns_dtda.o dns_ip.o \
-dns_ipq.o dns_name.o dns_nd.o dns_packet.o dns_random.o dns_rcip.o \
-dns_rcrw.o dns_resolve.o dns_sortip.o dns_transmit.o dns_txt.o lock_ex.o \
-lock_un.o coe.o
+uint16_unpack.o uint32_pack.o uint32_unpack.o iopause.o iopause_proxy.o \
+tai_pack.o taia_add.o taia_approx.o taia_frac.o taia_less.o taia_now.o \
+taia_pack.o taia_sub.o taia_uint.o dns_dfd.o dns_domain.o dns_dtda.o \
+dns_ip.o dns_ipq.o dns_name.o dns_nd.o dns_packet.o dns_random.o \
+dns_rcip.o dns_rcrw.o dns_resolve.o dns_sortip.o dns_transmit.o dns_txt.o \
+lock_ex.o lock_un.o coe.o
 	./makelib unix.a alloc.o alloc_re.o buffer.o buffer_0.o buffer_1.o \
 	buffer_2.o buffer_get.o buffer_put.o buffer_copy.o buffer_read.o \
-	buffer_write.o env.o error.o error_str.o fd_copy.o fd_move.o fmt_ulong.o \
-	getln.o getln2.o socket_accept.o socket_bind.o socket_conn.o \
-	socket_delay.o socket_listen.o socket_local.o socket_opts.o \
-	socket_remote.o socket_tcp.o socket_udp.o ndelay_on.o ndelay_off.o \
-	open_append.o open_read.o open_trunc.o openreadclose.o pathexec_env.o \
-	pathexec_run.o prot.o readclose.o seek_set.o sgetopt.o sig.o sig_block.o \
-	sig_catch.o sig_pause.o str_chr.o str_diff.o str_len.o str_start.o \
-	stralloc_cat.o stralloc_catb.o stralloc_cats.o stralloc_copy.o \
-	stralloc_eady.o stralloc_opyb.o stralloc_opys.o stralloc_pend.o \
-	strerr_die.o strerr_sys.o subgetopt.o wait_nohang.o wait_pid.o \
-	byte_chr.o byte_copy.o byte_cr.o byte_diff.o byte_zero.o case_diffb.o \
-	case_diffs.o ip4_fmt.o ip4_scan.o scan_ulong.o scan_uint.o uint16_pack.o \
-	uint16_unpack.o uint32_pack.o uint32_unpack.o iopause.o tai_pack.o \
-	taia_add.o taia_approx.o taia_frac.o taia_less.o taia_now.o taia_pack.o \
-	taia_sub.o taia_uint.o dns_dfd.o dns_domain.o dns_dtda.o dns_ip.o \
-	dns_ipq.o dns_name.o dns_nd.o dns_packet.o dns_random.o dns_rcip.o \
-	dns_rcrw.o dns_resolve.o dns_sortip.o dns_transmit.o dns_txt.o lock_ex.o \
-	lock_un.o coe.o
+	buffer_write.o env.o error.o error_str.o fd_copy.o fd_move.o \
+	fd_shutdown.o fmt_ulong.o getln.o getln2.o socket_accept.o socket_bind.o \
+	socket_conn.o socket_delay.o socket_listen.o socket_local.o \
+	socket_opts.o socket_remote.o socket_tcp.o socket_udp.o ndelay_on.o \
+	ndelay_off.o open_append.o open_read.o open_trunc.o openreadclose.o \
+	pathexec_env.o pathexec_run.o prot.o readclose.o seek_set.o sgetopt.o \
+	sig.o sig_block.o sig_catch.o sig_pause.o str_chr.o str_diff.o str_len.o \
+	str_start.o stralloc_cat.o stralloc_catb.o stralloc_cats.o \
+	stralloc_copy.o stralloc_eady.o stralloc_opyb.o stralloc_opys.o \
+	stralloc_pend.o strerr_die.o strerr_sys.o subgetopt.o wait_nohang.o \
+	wait_pid.o byte_chr.o byte_copy.o byte_cr.o byte_diff.o byte_zero.o \
+	case_diffb.o case_diffs.o ip4_fmt.o ip4_scan.o scan_ulong.o scan_uint.o \
+	uint16_pack.o uint16_unpack.o uint32_pack.o uint32_unpack.o iopause.o \
+	iopause_proxy.o tai_pack.o taia_add.o taia_approx.o taia_frac.o \
+	taia_less.o taia_now.o taia_pack.o taia_sub.o taia_uint.o dns_dfd.o \
+	dns_domain.o dns_dtda.o dns_ip.o dns_ipq.o dns_name.o dns_nd.o \
+	dns_packet.o dns_random.o dns_rcip.o dns_rcrw.o dns_resolve.o \
+	dns_sortip.o dns_transmit.o dns_txt.o lock_ex.o lock_un.o coe.o
 
 wait_nohang.o: compile wait_nohang.c haswaitp.h
 	./compile wait_nohang.c
