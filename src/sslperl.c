@@ -13,6 +13,7 @@
 #endif
 
 extern const char *self;
+extern char **environ;
 
 /* ActiveState Perl requires this be called my_perl */
 static PerlInterpreter *my_perl = 0;

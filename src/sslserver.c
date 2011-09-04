@@ -4,6 +4,7 @@
 #include <sys/param.h>
 #include <netdb.h>
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 #include <fcntl.h>
 #include <arpa/inet.h>
 #include "ssl.h"
@@ -41,6 +42,8 @@
 #include "auto_keyfile.h"
 #include "auto_ciphers.h"
 #include "fmt.h"
+#include "ucspitls_master.h"
+#include "ucspitls.h"
 
 int verbosity = 1;
 int flagkillopts = 1;
@@ -117,6 +120,7 @@ char buf[SSL_NAME_LEN];
 /* ---------------------------- child */
 
 #define DROP "sslserver: warning: dropping connection, "
+#define DROPSSL "sslserver: warning: SSL disabled due to server error, "
 
 int flagdeny = 0;
 int flagallownorules = 0;
@@ -189,12 +193,11 @@ void doit(int t) {
   int wstat;
   int sslctl[2];
   char *s;
-  long tmp_long;
-  char ssl_cmd;
+  unsigned long tmp_long;
+  char sslctl_cmd;
   stralloc ssl_env = { 0 };
-  int bytesleft;
-  char envbuf[8192];
-  
+  buffer ssl_env_buf;
+
   if (pipe(pi) == -1) strerr_die2sys(111,DROP,"unable to create pipe: ");
   if (pipe(po) == -1) strerr_die2sys(111,DROP,"unable to create pipe: ");
   if (socketpair(AF_UNIX, SOCK_STREAM, 0, sslctl) == -1) strerr_die2sys(111,DROP,"unable to create socketpair: ");
@@ -209,36 +212,37 @@ void doit(int t) {
       /* Parent */
       
       close(pi[0]); close(po[1]); close(sslctl[1]);
-
+      
       if ((s=env_get("SSL_CHROOT")))
         if (chroot(s) == -1)
-          strerr_die2x(111,DROP,"unable to chroot");
+          strerr_die2x(111,DROPSSL,"unable to chroot");
       
       if ((s=env_get("SSL_GID"))) {
         scan_ulong(s,&tmp_long);
         gid = tmp_long;
       }
-      if (gid) if (prot_gid(gid) == -1) strerr_die2sys(111,FATAL,"unable to set gid: ");
+      if (gid) if (prot_gid(gid) == -1) strerr_die2sys(111,DROPSSL,"unable to set gid: ");
 
       if ((s=env_get("SSL_UID"))) {
         scan_ulong(s,&tmp_long);
         uid = tmp_long;
       }
       if (uid) if (prot_uid(uid) == -1)
-        strerr_die2sys(111,FATAL,"unable to set uid: ");
+        strerr_die2sys(111,DROPSSL,"unable to set uid: ");
 
-      /* Read the TLS command socket.  This will block until/unless
-       * TLS is requested.
+      /* This will exit on a fatal error or if the client quits
+       * without activating SSL
        */
-      if (read(sslctl[0],&ssl_cmd,1) == 1) {
-        ssl = ssl_new(ctx,t);
-        if (!ssl) strerr_die2x(111,DROP,"unable to create SSL instance");
-        if (ndelay_on(t) == -1)
-          strerr_die2sys(111,DROP,"unable to set socket options: ");
-        if (ssl_timeoutaccept(ssl,ssltimeout) == -1)
-          strerr_die3x(111,DROP,"unable to accept SSL: ",ssl_error_str(ssl_errno));
-      }
-        
+      sslctl_cmd = ucspitls_master_wait_for_activation(sslctl[0]);
+      
+      /* If we got here, SSL must have been activated */
+      ssl = ssl_new(ctx,t);
+      if (!ssl) strerr_die2x(111,DROP,"unable to create SSL instance");
+      if (ndelay_on(t) == -1)
+	strerr_die2sys(111,DROP,"unable to set socket options: ");
+      if (ssl_timeoutaccept(ssl,ssltimeout) == -1)
+	strerr_die3x(111,DROP,"unable to accept SSL: ",ssl_error_str(ssl_errno));
+      
       if (verbosity >= 2) {
         strnum[fmt_ulong(strnum,getpid())] = 0;
         strerr_warn3("sslserver: ssl ",strnum," accept ",0);
@@ -256,15 +260,21 @@ void doit(int t) {
         }
       }
       
-      if (ssl_cmd == 'Y') {
+      if (sslctl_cmd == 'Y') {
         ssl_server_env(ssl, &ssl_env);
         stralloc_0(&ssl_env); /* Add another NUL */
-
-        for(bytesleft = ssl_env.len; bytesleft>0; bytesleft-=j)
-          if ( (j=write(sslctl[0], ssl_env.s, bytesleft)) < 0)
-            strerr_die2sys(111, FATAL, "unable to write SSL environment: ");
+	buffer_init(&ssl_env_buf,buffer_unixwrite,sslctl[0],NULL,0);
+	if (buffer_putflush(&ssl_env_buf, ssl_env.s, ssl_env.len) == -1) {
+	  strerr_die2sys(111, FATAL, "unable to write SSL environment: ");
+	}
+      } else if (sslctl_cmd != 'y') {
+	strerr_die2x(111,DROP,"Protocol error on SSL control descriptor: invalid command character read");
       }
 
+      if (close(sslctl[0]) != 0) {
+	strerr_die2sys(111, DROP, "Error closing SSL control socket: ");
+      }
+      
       if (ssl_io(ssl,pi[1],po[0],3600) != 0)
         strerr_die3x(111,DROP,"unable to speak SSL: ",ssl_error_str(ssl_errno));
       if (wait_nohang(&wstat) > 0)
@@ -274,8 +284,11 @@ void doit(int t) {
   }
 
   /* Child-only below this point */
+  if (close(sslctl[0]) != 0) { 
+    strerr_die2sys(111, DROP, "Error closing SSL control socket: ");
+  }
+  
   remoteipstr[ip4_fmt(remoteipstr,remoteip)] = 0;
-
   if (verbosity >= 2) {
     strnum[fmt_ulong(strnum,getpid())] = 0;
     strerr_warn4("sslserver: pid ",strnum," from ",remoteipstr,0);
@@ -386,18 +399,18 @@ void doit(int t) {
   if (fcntl(sslctl[1],F_SETFD,0) == -1)
     strerr_die2sys(111,FATAL,"unable to clear close-on-exec flag");
   strnum[fmt_ulong(strnum,sslctl[1])]=0;
-  env("SSLCTLFD",strnum);
+  setenv("SSLCTLFD",strnum,1);
 
   if (fcntl(pi[0],F_SETFD,0) == -1)
     strerr_die2sys(111,FATAL,"unable to clear close-on-exec flag");
   strnum[fmt_ulong(strnum,pi[0])]=0;
-  env("SSLREADFD",strnum);
+  setenv("SSLREADFD",strnum,1);
 
   if (fcntl(po[1],F_SETFD,0) == -1)
     strerr_die2sys(111,FATAL,"unable to clear close-on-exec flag");
   strnum[fmt_ulong(strnum,po[1])]=0;
-  env("SSLWRITEFD",strnum);
-
+  setenv("SSLWRITEFD",strnum,1);
+  
   if (flagsslwait) {
     if (fd_copy(0,t) == -1)
       strerr_die2sys(111,DROP,"unable to set up descriptor 0: ");
@@ -422,19 +435,9 @@ void doit(int t) {
   }
 
   if (!flagsslwait) {
-    ssl_cmd = flagsslenv ? 'Y' : 'y';
-    if (write(sslctl[1], &ssl_cmd, 1) < 1)
-      strerr_die2sys(111,DROP,"unable to start SSL: ");
-    if (flagsslenv) {
-      while ((j=read(sslctl[1],envbuf,8192)) > 0) {
-        stralloc_catb(&ssl_env,envbuf,j);
-        if (ssl_env.len >= 2 && ssl_env.s[ssl_env.len-2]==0 && ssl_env.s[ssl_env.len-1]==0)
-          break;
-      }
-      if (j < 0)
-        strerr_die2sys(111,DROP,"unable to read SSL environment: ");
-      pathexec_multienv(&ssl_env);
-    }
+    strnum[fmt_ulong(strnum,flagsslenv)] = 0;
+    strerr_warn2("flagsslenv: ", strnum, 0);
+    ucspitls(flagsslenv,0,1);
   }
       
   pathexec(prog);
@@ -525,7 +528,7 @@ int main(int argc,char * const *argv) {
   int s;
   int t;
  
-  while ((opt = getopt(argc,argv,"dDvqQhHrR1UXx:t:T:u:g:l:b:B:c:pPoO3IiEeSsaAw:nN")) != opteof)
+  while ((opt = getopt(argc,argv,"dDvqQhHrR1UXx:t:T:u:g:l:b:B:c:pPoO3IiEeSsaAw:nNyY")) != opteof)
     switch(opt) {
       case 'b': scan_ulong(optarg,&backlog); break;
       case 'c': scan_ulong(optarg,&limit); break;
@@ -561,8 +564,8 @@ int main(int argc,char * const *argv) {
       case 's': flagsslenv = 1; break;
       case 'E': flagtcpenv = 0; break;
       case 'e': flagtcpenv = 1; break;
-      case 'n': flagsslwait = 1; break;
-      case 'N': flagsslwait = 0; break;
+      case 'n': case 'y': flagsslwait = 1; break;
+      case 'N': case 'Y': flagsslwait = 0; break;
       default: usage();
     }
   argc -= optind;

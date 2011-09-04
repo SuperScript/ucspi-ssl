@@ -31,6 +31,7 @@
 #include "byte.h"
 #include "ndelay.h"
 #include "wait.h"
+#include "ucspitls_master.h"
 
 #define FATAL "sslclient: fatal: "
 #define CONNECT "sslclient: unable to connect to "
@@ -71,6 +72,7 @@ int flagremotehost = 1;
 int flag3 = 0;
 int flagsslenv = 0;
 int flagtcpenv = 0;
+int flagsslwait = 0;
 unsigned long itimeout = 26;
 unsigned long ctimeout[2] = { 2, 58 };
 unsigned int progtimeout = 3600;
@@ -130,6 +132,62 @@ int passwd_cb(char *buf,int size,int rwflag,void *userdata) {
   return password.len;
 }
 
+SSL *start_ssl(int s) {
+  int cloop;
+  SSL *ssl;
+
+  ctx = ssl_client();
+  ssl_errstr();
+  if (!ctx)
+    strerr_die2x(111,FATAL,"unable to create SSL context");
+
+  switch (ssl_certkey(ctx,certfile,keyfile,passwd_cb)) {
+    case -1: strerr_die2x(111,FATAL,"unable to load certificate");
+    case -2: strerr_die2x(111,FATAL,"unable to load key pair");
+    case -3: strerr_die2x(111,FATAL,"key does not match certificate");
+    default: break;
+  }
+
+  if (!ssl_ca(ctx,cafile,cadir,verifydepth))
+    strerr_die2x(111,FATAL,"unable to load CA list");
+
+  if (!ssl_ciphers(ctx,ciphers))
+    strerr_die2x(111,FATAL,"unable to set cipher list");
+
+  ssl = ssl_new(ctx,s);
+  if (!ssl) strerr_die2x(111,FATAL,"unable to create SSL instance");
+
+  for (cloop = 0;cloop < 2;++cloop) {
+    if (!ssl_timeoutconn(ssl,ctimeout[cloop])) goto SSLCONNECTED;
+    if (!cloop && ctimeout[1]) continue;
+    strerr_warn2(FATAL,"unable to SSL connect:",&strerr_sys);
+    ssl_error(error_warn);
+  }
+  return NULL; /* Failure */
+
+ SSLCONNECTED:
+  ndelay_off(s);
+
+  if (verbosity >= 2)
+    strerr_warn1("sslclient: ssl connect",0);
+
+  if (flagservercert)
+    switch(ssl_verify(ssl,flagname ? hostname : 0)) {
+      case -1:
+	strerr_die2x(111,FATAL,"unable to verify server certificate");
+      case -2:
+	strerr_die2x(111,FATAL,"no server certificate");
+      case -3:
+	strerr_die2x(111,FATAL,"server name does not match certificate");
+      default: break;
+    }
+
+  if (!flagdelay)
+    socket_tcpnodelay(s); /* if it fails, bummer */
+
+  return ssl;
+}
+
 int main(int argc,char * const *argv) {
   unsigned long u;
   int opt;
@@ -137,8 +195,12 @@ int main(int argc,char * const *argv) {
   int j;
   int s;
   int cloop;
-  SSL *ssl;
+  SSL *ssl = NULL;
   int wstat;
+  int sslctl[2];
+  char sslctl_cmd;
+  stralloc ssl_env = { 0 };
+  buffer ssl_env_buf;
 
   dns_random_init(seed);
 
@@ -146,7 +208,7 @@ int main(int argc,char * const *argv) {
   close(7);
   sig_ignore(sig_pipe);
  
-  while ((opt = getopt(argc,argv,"dDvqQhHrRi:p:t:T:l:a:A:c:C:k:V:3eEsSnN0xXw:")) != opteof)
+  while ((opt = getopt(argc,argv,"dDvqQhHrRi:p:t:T:l:a:A:c:C:k:V:3eEsSnN0xXw:yY")) != opteof)
     switch(opt) {
       case 'd': flagdelay = 1; break;
       case 'D': flagdelay = 0; break;
@@ -181,6 +243,8 @@ int main(int argc,char * const *argv) {
       case 'n': flagname = 1; break;
       case 'x': flagservercert = 1; break;
       case 'X': flagservercert = 0; break;
+      case 'y': flagsslwait = 1; break;
+      case 'Y': flagsslwait = 0; break;
       default: usage();
     }
   argv += optind;
@@ -305,57 +369,24 @@ int main(int argc,char * const *argv) {
     }
   env("SSLREMOTEINFO",x);
   if (flagtcpenv) env("TCPREMOTEINFO",x);
+  
+  if (flagsslwait) {
+    /* Create delayed SSL control socket */
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sslctl) == -1) strerr_die2sys(111,FATAL,"unable to create socketpair: ");
 
-  ctx = ssl_client();
-  ssl_errstr();
-  if (!ctx)
-    strerr_die2x(111,FATAL,"unable to create SSL context");
-
-  switch (ssl_certkey(ctx,certfile,keyfile,passwd_cb)) {
-    case -1: strerr_die2x(111,FATAL,"unable to load certificate");
-    case -2: strerr_die2x(111,FATAL,"unable to load key pair");
-    case -3: strerr_die2x(111,FATAL,"key does not match certificate");
-    default: break;
-  }
-
-  if (!ssl_ca(ctx,cafile,cadir,verifydepth))
-    strerr_die2x(111,FATAL,"unable to load CA list");
-
-  if (!ssl_ciphers(ctx,ciphers))
-    strerr_die2x(111,FATAL,"unable to set cipher list");
-
-  ssl = ssl_new(ctx,s);
-  if (!ssl) strerr_die2x(111,FATAL,"unable to create SSL instance");
-
-  for (cloop = 0;cloop < 2;++cloop) {
-    if (!ssl_timeoutconn(ssl,ctimeout[cloop])) goto SSLCONNECTED;
-    if (!cloop && ctimeout[1]) continue;
-    strerr_warn2(FATAL,"unable to SSL connect:",&strerr_sys);
-    ssl_error(error_warn);
-  }
-
-  _exit(111);
-
-  SSLCONNECTED:
-
-  ndelay_off(s);
-
-  if (verbosity >= 2)
-    strerr_warn1("sslclient: ssl connect",0);
-
-  if (flagservercert)
-    switch(ssl_verify(ssl,flagname ? hostname : 0)) {
-      case -1:
-	strerr_die2x(111,FATAL,"unable to verify server certificate");
-      case -2:
-	strerr_die2x(111,FATAL,"no server certificate");
-      case -3:
-	strerr_die2x(111,FATAL,"server name does not match certificate");
-      default: break;
+    /* Copy the socket to file descriptors 6 and 7 right now, so we
+     * don't use them for something else later.
+     */
+    if (fd_copy(6,s) == -1)
+      strerr_die2sys(111,FATAL,"unable to set up descriptor 6: ");
+    if (fd_copy(7,s) == -1)
+      strerr_die2sys(111,FATAL,"unable to set up descriptor 7: ");
+  } else {
+    /* If we aren't delaying SSL, start it now, so we won't run the client if it fails */
+    if (!(ssl = start_ssl(s))) {
+      _exit(111);
     }
-
-  if (!flagdelay)
-    socket_tcpnodelay(s); /* if it fails, bummer */
+  }
 
   if (pipe(pi) == -1) strerr_die2sys(111,FATAL,"unable to create pipe: ");
   if (pipe(po) == -1) strerr_die2sys(111,FATAL,"unable to create pipe: ");
@@ -372,11 +403,47 @@ int main(int argc,char * const *argv) {
 
   switch(opt = fork()) {
     case -1:
+      /* Error */
       strerr_die2sys(111,FATAL,"unable to fork: ");
     case 0:
+      /* Child runs after switch */
       break;
     default:
+      /* Parent */
       close(pi[0]); close(po[1]);
+      if (flagsslwait) {
+	if (close(sslctl[1]) != 0) {
+	  strerr_die2sys(111, FATAL, "Error closing SSL control socket: ");
+	}
+
+	/* This will exit on a fatal error or if the client quits
+	 * without activating SSL
+	 */
+	sslctl_cmd = ucspitls_master_wait_for_activation(sslctl[0]);
+
+	/* If we got here, SSL has been requested. */
+	if (!(ssl = start_ssl(s))) {
+	  _exit(111);
+	}
+	
+	if (sslctl_cmd == 'Y') {
+	  if (!ssl_client_env(ssl, &ssl_env)) nomem();
+	  stralloc_0(&ssl_env); /* Add another NUL */
+	  buffer_init(&ssl_env_buf,buffer_unixwrite,sslctl[0],NULL,0);
+	  if (buffer_putflush(&ssl_env_buf, ssl_env.s, ssl_env.len) == -1) {
+	    strerr_die2sys(111, FATAL, "unable to write SSL environment: ");
+	  }
+	} else if (sslctl_cmd != 'y') {
+	  strerr_die2x(111,FATAL,"Unrecognized command on SSL socket");
+	}
+	if (close(sslctl[0]) != 0) {
+	  strerr_die2sys(111, FATAL, "Error closing SSL control socket: ");
+	}
+      }
+
+      if (verbosity >= 2)
+	strerr_warn1("sslclient: ssl_io starting",0);
+      
       if (ssl_io(ssl,pi[1],po[0],progtimeout)) {
 	strerr_warn2(FATAL,"unable to speak SSL:",&strerr_sys);
 	ssl_error(error_warn);
@@ -389,17 +456,28 @@ int main(int argc,char * const *argv) {
 	_exit(wait_exitcode(wstat));
       _exit(0);
   }
-  ssl_close(ssl); close(pi[1]); close(po[0]);
+  
+  /* Child */
+  close(pi[1]); close(po[0]); close(sslctl[0]);
 
-  if (flagsslenv && !ssl_client_env(ssl,0)) nomem();
+  if (flagsslwait) {
+    strnum[fmt_ulong(strnum,sslctl[1])]=0;
+    env("SSLCTLFD",strnum);
+    strnum[fmt_ulong(strnum,pi[0])]=0;
+    env("SSLREADFD",strnum);
+    strnum[fmt_ulong(strnum,po[1])]=0;
+    env("SSLWRITEFD",strnum);
+  } else {
+    ssl_close(ssl); 
+    if (fd_move(6,pi[0]) == -1)
+      strerr_die2sys(111,FATAL,"unable to set up descriptor 6: ");
+    if (fd_move(7,po[1]) == -1)
+      strerr_die2sys(111,FATAL,"unable to set up descriptor 7: ");
 
-  if (fd_move(6,pi[0]) == -1)
-    strerr_die2sys(111,FATAL,"unable to set up descriptor 6: ");
-  if (fd_move(7,po[1]) == -1)
-    strerr_die2sys(111,FATAL,"unable to set up descriptor 7: ");
+    if (flagsslenv && !ssl_client_env(ssl,0)) nomem();
+  }
   sig_uncatch(sig_pipe);
 
   pathexec(argv);
   strerr_die4sys(111,FATAL,"unable to run ",*argv,": ");
 }
-
