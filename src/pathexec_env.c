@@ -22,6 +22,12 @@ int pathexec_env(const char *s,const char *t)
   return stralloc_cat(&plus,&tmp);
 }
 
+int pathexec_multienv(stralloc *sa)
+{
+  if (!sa) return 1;
+  return stralloc_cat(&plus,sa);
+}
+
 void pathexec(char * const *argv)
 {
   char **e;

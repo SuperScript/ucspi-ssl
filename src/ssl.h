@@ -20,7 +20,7 @@ extern int ssl_verify(SSL *,const char *);
 extern int ssl_params(SSL_CTX *,const char *,int);
 extern int ssl_server_env(SSL *,stralloc *);
 extern int ssl_client_env(SSL *,stralloc *);
-extern void ssl_error_str();
+extern char *ssl_error_str(int);
 extern int ssl_error(int (*)(const char *));
 
 #define ssl_client() (ssl_context(SSLv23_client_method()))
