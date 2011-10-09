@@ -23,7 +23,7 @@ char ucspitls_master_wait_for_activation(int fd) {
       break;
     } else if (sslctl_read_ret == 0) {
       /* EOF from client, it must have exited */
-      if (wait_nohang(&wstat) <= 0) {
+      if ((wait_pid(&wstat,-1)) <= 0) {
 	strerr_die2sys(111, FATAL, "Error waiting for child socket: ");
       }
       _exit(wait_exitcode(wstat));
