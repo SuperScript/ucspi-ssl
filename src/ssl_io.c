@@ -104,6 +104,7 @@ events:
 	case SSL_ERROR_WANT_X509_LOOKUP:
 	  break;
 	case SSL_ERROR_ZERO_RETURN:
+	case SSL_ERROR_SSL:
 	  if (rightstatus == -1) goto done;
 	  close(fdleft);
 	  leftstatus = -1;
@@ -115,10 +116,6 @@ events:
 	  if (!errno) break;
 	  /* premature close */
 	  if (errno == error_connreset  && rightstatus == -1) goto done;
-	  goto bomb;
-	case SSL_ERROR_SSL:
-	  if (errno == error_again || errno == error_intr) break;
-	  if (!errno) break;
 	  goto bomb;
 	default:
 	  close(fdleft);
