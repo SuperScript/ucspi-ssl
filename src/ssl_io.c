@@ -18,7 +18,9 @@ static char rightbuf[16 * 1024];
 static int rightlen;
 static int rightpos;
 
-int ssl_io(SSL *ssl,int fdleft,int fdright,unsigned int timeout) {
+struct ssl_io_opt ssl_io_opt_default = { 3600, 1 };
+
+int ssl_io(SSL *ssl,int fdleft,int fdright,struct ssl_io_opt opt) {
   struct taia now;
   struct taia deadline;
   iopause_fd x[4];
@@ -75,7 +77,7 @@ int ssl_io(SSL *ssl,int fdleft,int fdright,unsigned int timeout) {
     }
 
     taia_now(&now);
-    taia_uint(&deadline,timeout);
+    taia_uint(&deadline,opt.timeout);
     taia_add(&deadline,&now,&deadline);
     iopause(x,xlen,&deadline,&now);
     for (r = 0;r < xlen;++r)
@@ -183,8 +185,8 @@ events:
       else if (r == 0) {
 	close(fdright);
 	rightstatus = -1;
-	if (ssl_shutdown(ssl)) goto done; 
-	if (leftstatus == -1) goto done;
+	if (ssl_shutdown(ssl) < 0) goto bomb;
+	if (leftstatus == -1 || opt.just_shutdown) goto done;
       }
       else {
 	rightstatus = 1;
@@ -231,14 +233,14 @@ bomb:
   if (leftstatus != -1) close(fdleft);
   if (rightstatus != -1) close(fdright);
   if (!ssl_shutdown_sent(ssl)) ssl_shutdown(ssl);
-  if (!ssl_shutdown_pending(ssl)) ssl_shutdown(ssl);
+  if (!opt.just_shutdown && !ssl_shutdown_pending(ssl)) ssl_shutdown(ssl);
   shutdown(wfd,2);
   errno = r;
   return -1;
 
 done:
   if (!ssl_shutdown_sent(ssl)) ssl_shutdown(ssl);
-  if (!ssl_shutdown_pending(ssl)) ssl_shutdown(ssl);
+  if (!opt.just_shutdown && !ssl_shutdown_pending(ssl)) ssl_shutdown(ssl);
   shutdown(wfd,2);
   if (leftstatus != -1) close(fdleft);
   if (rightstatus != -1) close(fdright);

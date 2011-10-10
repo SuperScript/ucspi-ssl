@@ -6,8 +6,14 @@
 
 #define SSL_NAME_LEN 256
 
+struct ssl_io_opt {
+  unsigned int timeout;
+  unsigned int just_shutdown;
+};
+extern struct ssl_io_opt ssl_io_opt_default;
+
 extern int ssl_errno;
-extern int ssl_io(SSL *,int,int,unsigned int);
+extern int ssl_io(SSL *,int,int,struct ssl_io_opt);
 extern SSL_CTX *ssl_context(SSL_METHOD *);
 extern int ssl_timeoutconn(SSL *,unsigned int);
 extern int ssl_timeoutaccept(SSL *,unsigned int);
