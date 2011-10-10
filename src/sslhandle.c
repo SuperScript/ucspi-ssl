@@ -59,7 +59,7 @@ int flagsslenv = 0;
 int flagtcpenv = 0;
 unsigned long timeout = 26;
 unsigned long ssltimeout = 26;
-unsigned int progtimeout = 3600;
+struct ssl_io_opt io_opt;
 int selfpipe[2];
 int flagexit = 0;
 
@@ -384,7 +384,7 @@ int doit(int t) {
       close(pi[0]); close(po[1]);
       sig_uncatch(sig_child);
       sig_unblock(sig_child);
-      if (ssl_io(ssl,pi[1],po[0],progtimeout) == -1) {
+      if (ssl_io(ssl,pi[1],po[0],io_opt) == -1) {
 	strerr_warn2(DROP,"unable to speak SSL:",0);
 	ssl_error(error_warn);
 	_exit(111);
@@ -564,9 +564,12 @@ int main(int argc,char * const *argv) {
   char ch;
   struct taia deadline;
   struct taia stamp;
+
+  io_opt = ssl_io_opt_default;
+  io_opt.timeout = 3600;
  
   self = argv[0];
-  while ((opt = getopt(argc,argv,"dDvqQhHrR1UXx:t:T:u:g:l:b:B:c:pPoO3IiEeSsaAf:w:")) != opteof)
+  while ((opt = getopt(argc,argv,"dDvqQhHrR1UXx:t:T:u:g:l:b:B:c:pPoO3IiEeSsaAf:w:jJ")) != opteof)
     switch(opt) {
       case 'b': scan_ulong(optarg,&backlog); break;
       case 'c': scan_ulong(optarg,&limit); break;
@@ -604,7 +607,9 @@ int main(int argc,char * const *argv) {
       case 'A': flagafter = 0; break;
       case 'a': flagafter = 1; break;
       case 'f': lockfile = optarg; break;
-      case 'w': scan_uint(optarg,&progtimeout); break;
+      case 'w': scan_uint(optarg,&io_opt.timeout); break;
+      case 'j': io_opt.just_shutdown = 1; break;
+      case 'J': io_opt.just_shutdown = 0; break;
       default: usage();
     }
   argc -= optind;

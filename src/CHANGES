@@ -69,3 +69,13 @@
 
 20050717
 	Version 0.70.
+
+20110901 (sgifford@suspectclass.com)
+	Add support for UCSPI-TLS in server (Scott Gifford)
+	Add support for UCSPI-TLS in client (Scott Gifford, sponsored by Meixler Technologies, Inc.)
+	For details see: http://www.suspectclass.com/sgifford/ucspi-tls/
+\ No newline at end of file
+	Add privilege separation to sslserver
+	Add chroot(2) support to sslserver
+	Add switching user ID and group ID in sslsever
+	

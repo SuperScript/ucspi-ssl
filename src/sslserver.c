@@ -4,6 +4,8 @@
 #include <sys/param.h>
 #include <netdb.h>
 #include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <fcntl.h>
 #include <arpa/inet.h>
 #include "ssl.h"
 #include "uint16.h"
@@ -39,10 +41,12 @@
 #include "auto_certfile.h"
 #include "auto_keyfile.h"
 #include "auto_ciphers.h"
+#include "fmt.h"
+#include "ucspitls_master.h"
+#include "ucspitls.h"
 
 int verbosity = 1;
 int flagkillopts = 1;
-int flagafter = 0;
 int flagdelay = 0;
 const char *banner = "";
 int flagremoteinfo = 1;
@@ -51,9 +55,10 @@ int flagparanoid = 0;
 int flagclientcert = 0;
 int flagsslenv = 0;
 int flagtcpenv = 0;
+int flagsslwait = 0;
 unsigned long timeout = 26;
 unsigned long ssltimeout = 26;
-unsigned int progtimeout = 3600;
+static struct ssl_io_opt io_opt;
 
 static stralloc tcpremoteinfo;
 
@@ -71,6 +76,9 @@ char remoteipstr[IP4_FMT];
 static stralloc remotehostsa;
 char *remotehost = 0;
 char *verifyhost = 0;
+
+unsigned long uid = 0;
+unsigned long gid = 0;
 
 char strnum[FMT_ULONG];
 char strnum2[FMT_ULONG];
@@ -106,10 +114,13 @@ stralloc envsa = {0};
 X509 *cert;
 char buf[SSL_NAME_LEN];
 
+#define FATAL "sslserver: fatal: "
+
 
 /* ---------------------------- child */
 
 #define DROP "sslserver: warning: dropping connection, "
+#define DROPSSL "sslserver: warning: SSL disabled due to server error, "
 
 int flagdeny = 0;
 int flagallownorules = 0;
@@ -180,9 +191,104 @@ void doit(int t) {
   int j;
   SSL *ssl;
   int wstat;
+  int sslctl[2];
+  char *s;
+  unsigned long tmp_long;
+  char sslctl_cmd;
+  stralloc ssl_env = { 0 };
+  buffer ssl_env_buf;
 
+  if (pipe(pi) == -1) strerr_die2sys(111,DROP,"unable to create pipe: ");
+  if (pipe(po) == -1) strerr_die2sys(111,DROP,"unable to create pipe: ");
+  if (socketpair(AF_UNIX, SOCK_STREAM, 0, sslctl) == -1) strerr_die2sys(111,DROP,"unable to create socketpair: ");
+  
+  switch(fork()) {
+    case -1:
+      strerr_die2sys(111,DROP,"unable to fork: ");
+    case 0:
+      /* Child */
+      break;
+    default:
+      /* Parent */
+      
+      close(pi[0]); close(po[1]); close(sslctl[1]);
+      
+      if ((s=env_get("SSL_CHROOT")))
+        if (chroot(s) == -1)
+          strerr_die2x(111,DROPSSL,"unable to chroot");
+      
+      if ((s=env_get("SSL_GID"))) {
+        scan_ulong(s,&tmp_long);
+        gid = tmp_long;
+      }
+      if (gid) if (prot_gid(gid) == -1) strerr_die2sys(111,DROPSSL,"unable to set gid: ");
+
+      if ((s=env_get("SSL_UID"))) {
+        scan_ulong(s,&tmp_long);
+        uid = tmp_long;
+      }
+      if (uid) if (prot_uid(uid) == -1)
+        strerr_die2sys(111,DROPSSL,"unable to set uid: ");
+
+      /* This will exit on a fatal error or if the client quits
+       * without activating SSL
+       */
+      sslctl_cmd = ucspitls_master_wait_for_activation(sslctl[0]);
+      
+      /* If we got here, SSL must have been activated */
+      ssl = ssl_new(ctx,t);
+      if (!ssl) strerr_die2x(111,DROP,"unable to create SSL instance");
+      if (ndelay_on(t) == -1)
+	strerr_die2sys(111,DROP,"unable to set socket options: ");
+      if (ssl_timeoutaccept(ssl,ssltimeout) == -1)
+	strerr_die3x(111,DROP,"unable to accept SSL: ",ssl_error_str(ssl_errno));
+      
+      if (verbosity >= 2) {
+        strnum[fmt_ulong(strnum,getpid())] = 0;
+        strerr_warn3("sslserver: ssl ",strnum," accept ",0);
+      }
+        
+      if (flagclientcert) {
+        switch(ssl_verify(ssl,verifyhost)) {
+          case -1:
+            strerr_die2x(111,DROP,"unable to verify client certificate");
+          case -2:
+            strerr_die2x(111,DROP,"no client certificate");
+          case -3:
+            strerr_die2x(111,DROP,"client name does not match certificate");
+          default: break;
+        }
+      }
+      
+      if (sslctl_cmd == 'Y') {
+        ssl_server_env(ssl, &ssl_env);
+        stralloc_0(&ssl_env); /* Add another NUL */
+	buffer_init(&ssl_env_buf,buffer_unixwrite,sslctl[0],NULL,0);
+	if (buffer_putflush(&ssl_env_buf, ssl_env.s, ssl_env.len) == -1) {
+	  strerr_die2sys(111, FATAL, "unable to write SSL environment: ");
+	}
+      } else if (sslctl_cmd != 'y') {
+	strerr_die2x(111,DROP,"Protocol error on SSL control descriptor: invalid command character read");
+      }
+
+      if (close(sslctl[0]) != 0) {
+	strerr_die2sys(111, DROP, "Error closing SSL control socket: ");
+      }
+      
+      if (ssl_io(ssl,pi[1],po[0],io_opt) != 0)
+        strerr_die3x(111,DROP,"unable to speak SSL: ",ssl_error_str(ssl_errno));
+      if (wait_nohang(&wstat) > 0)
+        _exit(wait_exitcode(wstat));
+      ssl_close(ssl);
+      _exit(0);
+  }
+
+  /* Child-only below this point */
+  if (close(sslctl[0]) != 0) { 
+    strerr_die2sys(111, DROP, "Error closing SSL control socket: ");
+  }
+  
   remoteipstr[ip4_fmt(remoteipstr,remoteip)] = 0;
-
   if (verbosity >= 2) {
     strnum[fmt_ulong(strnum,getpid())] = 0;
     strerr_warn4("sslserver: pid ",strnum," from ",remoteipstr,0);
@@ -278,59 +384,11 @@ void doit(int t) {
 
   if (flagdeny) _exit(100);
 
-  if (pipe(pi) == -1) strerr_die2sys(111,DROP,"unable to create pipe: ");
-  if (pipe(po) == -1) strerr_die2sys(111,DROP,"unable to create pipe: ");
+  if (gid) if (prot_gid(gid) == -1)
+    strerr_die2sys(111,FATAL,"unable to set gid: ");
+  if (uid) if (prot_uid(uid) == -1)
+    strerr_die2sys(111,FATAL,"unable to set uid: ");
 
-  ssl = ssl_new(ctx,t);
-  if (!ssl) strerr_die2x(111,DROP,"unable to create SSL instance");
-  if (ndelay_on(t) == -1)
-    strerr_die2sys(111,DROP,"unable to set socket options: ");
-  if (ssl_timeoutaccept(ssl,ssltimeout) == -1) {
-    strerr_warn2(DROP,"unable to SSL accept:",&strerr_sys);
-    ssl_error(error_warn);
-    ssl_close(ssl);
-    _exit(111);
-  }
-
-  if (verbosity >= 2) {
-    strnum[fmt_ulong(strnum,getpid())] = 0;
-    strerr_warn3("sslserver: ssl ",strnum," accept ",0);
-  }
-
-  if (flagclientcert) {
-    switch(ssl_verify(ssl,verifyhost)) {
-      case -1:
-	strerr_die2x(111,DROP,"unable to verify client certificate");
-      case -2:
-	strerr_die2x(111,DROP,"no client certificate");
-      case -3:
-	strerr_die2x(111,DROP,"client name does not match certificate");
-      default: break;
-    }
-  }
-
-  switch(j = fork()) {
-    case -1:
-      strerr_die2sys(111,DROP,"unable to fork: ");
-    case 0:
-      break;
-    default:
-      sig_ignore(sig_pipe);
-      sig_uncatch(sig_child);
-      sig_unblock(sig_child);
-      close(pi[0]); close(po[1]);
-      if (ssl_io(ssl,pi[1],po[0],progtimeout) != 0) {
-	strerr_warn2(DROP,"unable to speak SSL:",&strerr_sys);
-	ssl_error(error_warn);
-	ssl_close(ssl);
-	wait_pid(&wstat,j);
-	_exit(111);
-      }
-      ssl_close(ssl);
-      if (wait_pid(&wstat,j) > 0)
-	_exit(wait_exitcode(wstat));
-      _exit(0);
-  }
   close(pi[1]); close(po[0]);
 
   sig_uncatch(sig_child);
@@ -338,13 +396,32 @@ void doit(int t) {
   sig_uncatch(sig_term);
   sig_uncatch(sig_pipe);
 
-  if (flagsslenv && !ssl_server_env(ssl,0)) drop_nomem();
-  ssl_close(ssl);  
+  if (fcntl(sslctl[1],F_SETFD,0) == -1)
+    strerr_die2sys(111,FATAL,"unable to clear close-on-exec flag");
+  strnum[fmt_ulong(strnum,sslctl[1])]=0;
+  setenv("SSLCTLFD",strnum,1);
 
-  if (fd_move(0,pi[0]) == -1)
-    strerr_die2sys(111,DROP,"unable to set up descriptor 0: ");
-  if (fd_move(1,po[1]) == -1)
-    strerr_die2sys(111,DROP,"unable to set up descriptor 1: ");
+  if (fcntl(pi[0],F_SETFD,0) == -1)
+    strerr_die2sys(111,FATAL,"unable to clear close-on-exec flag");
+  strnum[fmt_ulong(strnum,pi[0])]=0;
+  setenv("SSLREADFD",strnum,1);
+
+  if (fcntl(po[1],F_SETFD,0) == -1)
+    strerr_die2sys(111,FATAL,"unable to clear close-on-exec flag");
+  strnum[fmt_ulong(strnum,po[1])]=0;
+  setenv("SSLWRITEFD",strnum,1);
+  
+  if (flagsslwait) {
+    if (fd_copy(0,t) == -1)
+      strerr_die2sys(111,DROP,"unable to set up descriptor 0: ");
+    if (fd_copy(1,t) == -1)
+      strerr_die2sys(111,DROP,"unable to set up descriptor 1: ");
+  } else {
+    if (fd_move(0,pi[0]) == -1)
+      strerr_die2sys(111,DROP,"unable to set up descriptor 0: ");
+    if (fd_move(1,po[1]) == -1)
+      strerr_die2sys(111,DROP,"unable to set up descriptor 1: ");
+  }
 
   if (flagkillopts)
     socket_ipoptionskill(t);
@@ -357,6 +434,12 @@ void doit(int t) {
       strerr_die2sys(111,DROP,"unable to print banner: ");
   }
 
+  if (!flagsslwait) {
+    strnum[fmt_ulong(strnum,flagsslenv)] = 0;
+    strerr_warn2("flagsslenv: ", strnum, 0);
+    ucspitls(flagsslenv,0,1);
+  }
+      
   pathexec(prog);
   strerr_die4sys(111,DROP,"unable to run ",*prog,": ");
 }
@@ -365,13 +448,11 @@ void doit(int t) {
 
 /* ---------------------------- parent */
 
-#define FATAL "sslserver: fatal: "
-
 void usage(void)
 {
   strerr_warn1("\
 sslserver: usage: sslserver \
-[ -13UXpPhHrRoOdDqQviIeEsS ] \
+[ -13UXpPhHrRoOdDqQviIeEsSnN ] \
 [ -c limit ] \
 [ -x rules.cdb ] \
 [ -B banner ] \
@@ -392,8 +473,6 @@ unsigned long numchildren = 0;
 int flag1 = 0;
 int flag3 = 0;
 unsigned long backlog = 20;
-unsigned long uid = 0;
-unsigned long gid = 0;
 
 void printstatus(void)
 {
@@ -448,8 +527,11 @@ int main(int argc,char * const *argv) {
   unsigned long u;
   int s;
   int t;
- 
-  while ((opt = getopt(argc,argv,"dDvqQhHrR1UXx:t:T:u:g:l:b:B:c:pPoO3IiEeSsaAw:")) != opteof)
+
+  io_opt = ssl_io_opt_default;
+  io_opt.timeout = 3600;
+
+  while ((opt = getopt(argc,argv,"dDvqQhHrR1UXx:t:T:u:g:l:b:B:c:pPoO3IiEeSsaAw:nNyYuUjJ")) != opteof)
     switch(opt) {
       case 'b': scan_ulong(optarg,&backlog); break;
       case 'c': scan_ulong(optarg,&limit); break;
@@ -471,7 +553,7 @@ int main(int argc,char * const *argv) {
       case 'r': flagremoteinfo = 1; break;
       case 't': scan_ulong(optarg,&timeout); break;
       case 'T': scan_ulong(optarg,&ssltimeout); break;
-      case 'w': scan_uint(optarg,&progtimeout); break;
+      case 'w': scan_uint(optarg,&io_opt.timeout); break;
       case 'U': x = env_get("UID"); if (x) scan_ulong(x,&uid);
 		x = env_get("GID"); if (x) scan_ulong(x,&gid); break;
       case 'u': scan_ulong(optarg,&uid); break;
@@ -485,8 +567,10 @@ int main(int argc,char * const *argv) {
       case 's': flagsslenv = 1; break;
       case 'E': flagtcpenv = 0; break;
       case 'e': flagtcpenv = 1; break;
-      case 'A': flagafter = 0; break;
-      case 'a': flagafter = 1; break;
+      case 'n': case 'y': flagsslwait = 1; break;
+      case 'N': case 'Y': flagsslwait = 0; break;
+      case 'j': io_opt.just_shutdown = 1; break;
+      case 'J': io_opt.just_shutdown = 0; break;
       default: usage();
     }
   argc -= optind;
@@ -566,13 +650,6 @@ int main(int argc,char * const *argv) {
     strerr_die2sys(111,FATAL,"unable to listen: ");
   ndelay_off(s);
 
-  if (!flagafter) {
-    if (gid) if (prot_gid(gid) == -1)
-      strerr_die2sys(111,FATAL,"unable to set gid: ");
-    if (uid) if (prot_uid(uid) == -1)
-      strerr_die2sys(111,FATAL,"unable to set uid: ");
-  }
-
   localportstr[fmt_ulong(localportstr,localport)] = 0;
   if (flag1) {
     buffer_init(&b,buffer_unixwrite,1,bspace,sizeof bspace);
@@ -603,13 +680,6 @@ int main(int argc,char * const *argv) {
   if (!ssl_params(ctx,dhfile,rsalen))
     strerr_die2x(111,FATAL,"unable to set cipher parameters");
 
-  if (flagafter) {
-    if (gid) if (prot_gid(gid) == -1)
-      strerr_die2sys(111,FATAL,"unable to set gid: ");
-    if (uid) if (prot_uid(uid) == -1)
-      strerr_die2sys(111,FATAL,"unable to set uid: ");
-  }
-
   if (!ssl_ciphers(ctx,ciphers))
     strerr_die2x(111,FATAL,"unable to set cipher list");
 
@@ -624,8 +694,9 @@ int main(int argc,char * const *argv) {
     strerr_warn6("sslserver: param ",strnum," ",dhfile," ",strnum2,0);
   }
 
-  close(0);
-  close(1);
+  close(0); open_read("/dev/null");
+  close(1); open_append("/dev/null");
+
   printstatus();
  
   for (;;) {
@@ -650,3 +721,11 @@ int main(int argc,char * const *argv) {
     close(t);
   }
 }
+
+/* taken from 0.68 */
+char *ssl_error_str(int e)
+{
+  SSL_load_error_strings();
+  return ERR_error_string(e,0);
+}
+

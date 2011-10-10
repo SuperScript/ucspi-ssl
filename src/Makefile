@@ -36,7 +36,8 @@ clean:
 	tai_pack.o taia_add.o taia_approx.o taia_frac.o taia_less.o taia_now.o \
 	taia_pack.o taia_sub.o taia_uint.o timeoutconn.o uint16_pack.o \
 	uint16_unpack.o uint32.h uint32_pack.o uint32_unpack.o uint64.h unix.a \
-	wait_nohang.o wait_pid.o
+	wait_nohang.o wait_pid.o tryssl.o \
+	ucspissltest ucspissltest.o ucspitls.o
 
 alloc.o: compile alloc.c alloc.h error.h
 	./compile alloc.c
@@ -312,7 +313,7 @@ ip4_scan.o: compile ip4_scan.c scan.h ip4.h
 
 it: it-base it-sslperl sysdeps
 
-it-base: sslclient sslserver https@ sslcat sslconnect sslprint sysdeps
+it-base: sslclient sslserver https@ sslcat sslconnect sslprint sysdeps ucspissltest
 
 it-sslperl: sslperl sysdeps
 
@@ -504,9 +505,9 @@ sslcat: home warn-auto.sh sslcat.sh
 	chmod 755 sslcat
 
 sslclient: load sslclient.o remoteinfo.o timeoutconn.o ssl.a unix.a \
-auto_cafile.o auto_cadir.o auto_ciphers.o socket.lib ssl.lib
+auto_cafile.o auto_cadir.o auto_ciphers.o wait_nohang.o ucspitls_master.o socket.lib ssl.lib
 	./load sslclient remoteinfo.o timeoutconn.o ssl.a unix.a auto_cafile.o \
-	auto_cadir.o auto_ciphers.o  `cat socket.lib` `cat ssl.lib`
+	auto_cadir.o auto_ciphers.o wait_nohang.o ucspitls_master.o  `cat socket.lib` `cat ssl.lib`
 
 sslclient.o: compile sslclient.c ssl.h sig.h exit.h sgetopt.h uint16.h \
 fmt.h scan.h str.h ip4.h uint16.h socket.h fd.h stralloc.h buffer.h \
@@ -562,10 +563,10 @@ sslprint.o: compile sslprint.c buffer.h env.h
 
 sslserver: load sslserver.o auto_cafile.o auto_ccafile.o auto_cadir.o \
 auto_dhfile.o auto_certfile.o auto_keyfile.o auto_ciphers.o rules.o \
-remoteinfo.o timeoutconn.o cdb.a ssl.a unix.a socket.lib ssl.lib
+remoteinfo.o timeoutconn.o wait_nohang.o ucspitls_master.o ucspitls.o cdb.a ssl.a unix.a socket.lib ssl.lib
 	./load sslserver auto_cafile.o auto_ccafile.o auto_cadir.o auto_dhfile.o \
 	auto_certfile.o auto_keyfile.o auto_ciphers.o rules.o remoteinfo.o \
-	timeoutconn.o cdb.a ssl.a unix.a  `cat socket.lib` `cat ssl.lib`
+	timeoutconn.o wait_nohang.o ucspitls_master.o ucspitls.o cdb.a ssl.a unix.a  `cat socket.lib` `cat ssl.lib`
 
 sslserver.o: compile sslserver.c ssl.h uint16.h str.h byte.h fmt.h scan.h \
 ip4.h fd.h exit.h env.h prot.h open.h wait.h stralloc.h alloc.h buffer.h \
@@ -575,7 +576,7 @@ auto_ccafile.h auto_dhfile.h auto_certfile.h auto_keyfile.h \
 auto_ciphers.h stralloc.h gen_alloc.h buffer.h stralloc.h subgetopt.h \
 uint16.h stralloc.h uint16.h stralloc.h stralloc.h iopause.h taia.h \
 gen_alloc.h gen_alloc.h gen_alloc.h gen_alloc.h gen_alloc.h taia.h tai.h \
-tai.h uint64.h uint64.h
+tai.h uint64.h uint64.h ucspitls.h
 	./compile sslserver.c
 
 str_chr.o: compile str_chr.c str.h
@@ -738,3 +739,15 @@ wait_nohang.o: compile wait_nohang.c haswaitp.h
 
 wait_pid.o: compile wait_pid.c error.h haswaitp.h
 	./compile wait_pid.c
+
+ucspissltest.o: ucspissltest.c ucspitls.h
+	./compile ucspissltest.c
+
+ucspitls.o: ucspitls.c ucspitls.h
+	./compile ucspitls.c
+
+ucspitls_master.o: ucspitls_master.c ucspitls_master.h wait.h strerr.h
+	./compile ucspitls_master.c
+
+ucspissltest: load ucspissltest.o ucspitls.o sgetopt.o sgetopt.h subgetopt.h subgetopt.o buffer.o buffer_2.o
+	./load ucspissltest ucspitls.o unix.a
