@@ -9,10 +9,10 @@ printf 'path='
 awk '1{print $1}' ../package/path
 
 printf 'version='
-awk '{v=$1};END{print v}' ../package/versions
+awk '$1{v=$1};END{print v}' ../package/versions
 
 printf 'revnumber='
-awk '{v=$1};END{print v}' ../package/versions
+awk '$1{v=$1};END{print v}' ../package/versions
 
 exit 0
 
