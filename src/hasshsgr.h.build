@@ -1,0 +1,3 @@
+build_ifchanged choose compile tryshsgr.c hasshsgr.h1 hasshsgr.h2 chkshsgr warn-shsgr
+./chkshsgr || ( cat warn-shsgr; exit 1; )
+./choose clr tryshsgr hasshsgr.h1 hasshsgr.h2

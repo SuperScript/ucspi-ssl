@@ -1,0 +1,5 @@
+# For base-dir build:
+pwd
+
+## For package build:
+# cd .. && pwd

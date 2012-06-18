@@ -1,0 +1,2 @@
+build_ifchanged choose compile load tryulong32.c uint32.h1 uint32.h2
+./choose clr tryulong32 uint32.h1 uint32.h2

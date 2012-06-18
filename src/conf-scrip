@@ -1,0 +1,12 @@
+dep#home
+var#HOME#"`head -1 home`"
+var#TARGET#"$1"
+var#TCPBIN#"`head -1 conf-tcpbin`"
+
+This file contains a list of lines providing information about script variable
+substitution.  The first blank line ends the list.  Each entry contains a type
+in column 1.  Different types contain different information in subsequent
+columns.  Columns are # separated.  There are two types: dep and var.  The dep
+type lists dependencies for variable substitution.  The var type contains a
+variable name and a substitution text used to construct a sed rule.
+

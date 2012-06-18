@@ -1,0 +1,2 @@
+build_ifchanged choose compile trysgprm.c hassgprm.h1 hassgprm.h2
+./choose cl trysgprm hassgprm.h1 hassgprm.h2

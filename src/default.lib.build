@@ -1,0 +1,20 @@
+case $1 in
+  socket.lib)
+    build_ifchanged trylsock.c compile load
+    ( ( ./compile trylsock.c && \
+      ./load trylsock -lsocket -lnsl ) >/dev/null 2>&1 \
+      && echo -lsocket -lnsl || exit 0 )
+      rm -f trylsock.o trylsock
+    exit 0
+    ;;
+  dns.lib)
+    build_ifchanged tryrsolv.c compile load socket.lib
+    ( ( ./compile tryrsolv.c && ./load tryrsolv \
+      -lresolv `cat socket.lib` ) >/dev/null 2>&1 \
+      && echo -lresolv || exit 0 )
+      rm -f tryrsolv.o tryrsolv
+    exit 0
+    ;;
+esac
+build_notarget
+

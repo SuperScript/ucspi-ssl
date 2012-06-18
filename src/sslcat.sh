@@ -1,9 +1,6 @@
 host=${1-0}
+shift
 port=${2-443}
-args=""
-if [ $# -gt 2 ]
-then
-  shift; shift
-  args="$@"
-fi
-exec HOME/command/sslclient -RHl0 $args -- "$host" "$port" sh -c 'exec cat <&6'
+shift
+exec #HOME#/command/sslclient -RHl0 ${1+"$@"} -- "$host" "$port" sh -c 'exec cat <&6'
+

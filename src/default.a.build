@@ -1,0 +1,5 @@
+build_ifchanged "$2=l" makelib
+build_ifchanged `cat "$2=l"`
+./makelib $3 `cat "$2=l"`
+exit $?
+

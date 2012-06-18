@@ -1,0 +1,2 @@
+build_ifchanged choose compile load trywaitp.c haswaitp.h1 haswaitp.h2
+./choose cl trywaitp haswaitp.h1 haswaitp.h2

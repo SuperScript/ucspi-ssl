@@ -1,0 +1,12 @@
+# This file contains a shell script that constructs a signature for source or
+# target files.  It takes the file name as an argument and prints the signature.
+# Lines beginning with # are stripped.
+
+openssl md5 "$1"
+
+# md5 -q "$1"
+# sha1 -q "$1"
+# sha256 -q "$1"
+#
+# FreeBSD
+#stat -f '%m' "$1"

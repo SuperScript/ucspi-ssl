@@ -1,0 +1,2 @@
+build_ifchanged choose compile trysgact.c hassgact.h1 hassgact.h2
+./choose cl trysgact hassgact.h1 hassgact.h2

@@ -1,0 +1,2 @@
+build_ifchanged choose compile trysysel.c select.h1 select.h2
+./choose c trysysel select.h1 select.h2

@@ -1,0 +1,56 @@
+shout() { echo "makefile.build: $*" >&2; }
+barf() { shout "fatal: $*"; exit 111; }
+safe() { "$@" || barf "cannot $*"; }
+
+usage() {
+  shout "usage: makefile.build target [ basename ]"
+}
+
+build_ifcreated() {
+  return
+}
+
+build_ifchanged() {
+  return
+}
+
+build_notarget() {
+  rm -f "$build_it_tmp"
+}
+
+build_failed() {
+  exit 111
+}
+
+build_dependcc() {
+  return
+}
+
+build_do() {
+  ( . "$build_it_cmds" "$1" "$2" "$3" > "$3" )
+}
+
+build_it() {
+  build_it_cmds="$1"
+  build_it_target="$2"
+  build_it_base="$3"
+  build_it_tmp="$build_it_target.tmp"
+  build_do "$build_it_target" "$build_it_base" "$build_it_tmp"  \
+    &&  {
+      [ -f "$build_it_tmp" ]  &&  mv "$build_it_tmp" "$build_it_target"
+    } \
+    ||  {
+      rm -f "$build_it_tmp"
+      return 111
+    }
+
+  return 0
+}
+
+
+# MAIN
+
+# build_it cmds target base
+[ 1 -le $# ] || usage
+build_it "$@"
+exit 0

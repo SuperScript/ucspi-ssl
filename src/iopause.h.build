@@ -1,0 +1,2 @@
+build_ifchanged choose compile load trypoll.c iopause.h1 iopause.h2
+./choose clr trypoll iopause.h1 iopause.h2

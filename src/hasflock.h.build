@@ -1,0 +1,2 @@
+build_ifchanged choose compile load tryflock.c hasflock.h1 hasflock.h2
+./choose cl tryflock hasflock.h1 hasflock.h2

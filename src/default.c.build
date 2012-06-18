@@ -1,0 +1,52 @@
+case "$1" in
+  auto_cadir.c)
+    build_ifchanged auto-str conf-cadir
+    ./auto-str auto_cadir "`head -1 conf-cadir`"
+    exit $?
+    ;;
+
+  auto_cafile.c)
+    build_ifchanged auto-str conf-cafile
+    ./auto-str auto_cafile "`head -1 conf-cafile`"
+    exit $?
+    ;;
+
+  auto_ccafile.c)
+    build_ifchanged auto-str conf-ccafile
+    ./auto-str auto_ccafile "`head -1 conf-ccafile`"
+    exit $?
+    ;;
+
+  auto_certfile.c)
+    build_ifchanged auto-str conf-certfile
+    ./auto-str auto_certfile "`head -1 conf-certfile`"
+    exit $?
+    ;;
+
+  auto_ciphers.c)
+    build_ifchanged auto-str conf-ciphers
+    ./auto-str auto_ciphers "`head -1 conf-ciphers`"
+    exit $?
+    ;;
+
+  auto_dhfile.c)
+    build_ifchanged auto-str conf-dhfile
+    ./auto-str auto_dhfile "`head -1 conf-dhfile`"
+    exit $?
+    ;;
+
+  auto_home.c)
+    build_ifchanged auto-str home
+    ./auto-str auto_home "`head -1 home`"
+    exit $?
+    ;;
+
+  auto_keyfile.c)
+    build_ifchanged auto-str conf-keyfile
+    ./auto-str auto_keyfile "`head -1 conf-keyfile`"
+    exit $?
+    ;;
+esac
+
+build_failed "no such target"
+
