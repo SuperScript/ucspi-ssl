@@ -1,0 +1,76 @@
+#!/bin/sh
+shout() { echo "package/dist: $*" >&2; }
+barf() { shout "fatal: $*"; exit 111; }
+safe() { "$@" || barf "cannot $*"; }
+usage() {
+  shout "usage: package/dist [ --help ]"
+  exit 100
+}
+
+need_files() {
+  need_files_rcode=0
+  for need_files_f in ${1+"$@"}
+  do
+    test -r "$need_files_f" || {
+      shout "no such file: $need_files_f"
+      need_files_rcode=111
+    }
+  done
+  return $need_files_rcode
+}
+
+need_dirs() {
+  need_dirs_rcode=0
+  for need_dirs_f in ${1+"$@"}
+  do
+    test -d "$need_dirs_f" || {
+      shout "no such file: $need_dirs_f"
+      need_dirs_rcode=111
+    }
+  done
+  return $need_dirs_rcode
+}
+
+inst_to() {
+  inst_to_file="$1"
+  shift
+  "$@" > "$inst_to_file.tmp" && mv "$inst_to_file.tmp" "$inst_to_file" || {
+    rm -f "$inst_to_file.tmp"
+    barf "cannot inst_to $*"
+  }
+}
+
+
+#### MAIN
+
+umask 022
+
+test "$1" = "--help" && usage
+
+here="`env - PATH=$PATH pwd`"
+
+safe need_files package/path package/versions package/name package/include
+safe need_dirs dist
+
+path="`awk '$1 {print $1; exit 0}' package/path`"
+name="`awk '$1 {print $1; exit 0}' package/name`"
+version="`awk '$1 {version=$1}; END {print version}' package/versions`"
+include_file="package/include"
+
+tmpdir="`mktemp -d -t dist`" || barf "cannot create tmpdir"
+pkgdir="$tmpdir/$path/$name-$version"
+distfile="$here/dist/$name-$version"
+
+trap 'rcode=$?; cd "$here" && rm -fr "$tmpdir"; exit $rcode' EXIT
+safe mkdir -p "$tmpdir/$path"
+safe chmod -R 01755 "$tmpdir"
+safe mkdir "$pkgdir"
+safe awk '$1 {print $1}' "$include_file" | while read f
+do
+  safe pax -r -w -ppam "$f" "$pkgdir/"
+done
+
+safe inst_to "$distfile.tar.gz" pax -w -z -s",$tmpdir/,," -s",$tmpdir,," "$tmpdir"
+
+exit 0
+
