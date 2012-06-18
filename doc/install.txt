@@ -4,6 +4,11 @@
 
 The {package} package works only under UNIX.
 
+This package requires http://www.openssl.org[OpenSSL] and
+http://cr.yp.to/ucspi-tcp.html[ucspi-tcp].  In particular, tests require
+ucspi-tcp.
+
+
 == Instructions
 
 === Installing Under +/package+
@@ -29,6 +34,10 @@ tar -xpf {package}-{version}.tar
 rm {package}-{version}.tar
 cd {path}/{package}-{version}
 !!!!
+
+Generate http://www.openssl.org/docs/apps/dhparam.html[DH parameters] if
+necessary.
+
 
 === Installing Under A Working Copy
 

@@ -4,4 +4,6 @@ Program like stunnel.
 Rules tests.
 SSL connection caching.
 Replace mconnect-io use in sslconnect.
-Rework sslperl build.
+Rework sslperl build to eliminate subsets.
+Port to new build package.
+
