@@ -1,10 +1,15 @@
-#!/bin/sh -e
-test -d compile || ( echo 'Wrong working directory.'; exit 1 )
+#!/bin/sh
+shout() { echo "report: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+[ -d compile ] || barf "no compile directory"
+[ -d package ] || barf "no package directory"
 here=`env - PATH=$PATH pwd`
-( echo ucspi-ssl-0.70
-  echo $here
-  if test -r compile/sysdeps
-  then
-    cat compile/sysdeps
-  fi
-) | mail web-inst@superscript.com
+{ echo "name: `head -1 package/name`"
+  echo "version: `tail -1 package/versions`"
+  echo "cwd: $here"
+  echo ''
+  test -r compile/systype && cat compile/systype
+  test -r compile/compile && cat compile/compile
+  test -r compile/load	  && cat compile/load
+  grep sysdep compile/*.h 2>/dev/null
+} | mail web-inst@superscript.com

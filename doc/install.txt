@@ -1,0 +1,83 @@
+= Install
+
+== System Requirements
+
+The {package} package works only under UNIX.
+
+== Instructions
+
+=== Installing Under +/package+
+
+These instructions describe an installation of a versioned distribution under
++/package+.  If you choose to install under a different prefix, replace
++/package+ with your choice of prefix in the steps that follow.
+
+Download the {package} package.  The most recent {package} package is
+link:{package}-{version}.tar.gz[{package} {version}].
+
+If necessary, create a +/package+ directory:
+!!!!
+mkdir /package
+chmod 1755 /package
+!!!!
+
+Unpack {package} in +/package+.
+!!!!
+cd /package
+gunzip {package}-{version}.tar
+tar -xpf {package}-{version}.tar
+rm {package}-{version}.tar
+cd {path}/{package}-{version}
+!!!!
+
+=== Installing Under A Working Copy
+
+These instructions describe how to install to run executables from a working
+copy of the repository.
+
+Clone the repository here: https://github.com/SuperScript/{package}[{package}].
+Check out the branch of your choice.
+
+Determine the list of directories to symlink commands into by editing the
++package/command-ln+ file.  The default is
++/package/host/superscript.com/command+.
+
+Determine the list of directories to copy commands into by editing the
++package/command-cp+ file.  The default is none.
+
+Compile the package:
+!!!!
+package/compile
+!!!!
+This compiles programs and copies them to the +commands/+ director.
+
+Run some tests:
+!!!!
+package/compile rts
+!!!!
+If the tests fail you will see a message indicating where to look for more
+information.
+
+Install the package.  This will compile the package if you have not already done
+so:
+!!!!
+package/install
+!!!!
+
+Compile the documentation:
+!!!!
+package/compile-doc
+!!!!
+
+This creates and populates the +html/+ directory.  It requires
+http://www.methods.co.nz/asciidoc/[asciidoc].  The source files are located in
++doc/+ and are directly readable.
+
+
+== Report Success
+
+Email a report to the author:
+!!!!
+package/report
+!!!!
+

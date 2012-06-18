@@ -1,0 +1,155 @@
+if test -r $1=x
+then
+  build_ifchanged $1=x
+  libscat=''
+  objs=''
+  libs="`grep '\.lib *$' "$1=x" || exit 0`"
+  nonlib="`grep -v '\.lib *$' "$1=x" || exit 0`"
+  for f in $nonlib
+  do
+    case "$f" in
+      *=d)
+	build_ifchanged "$f"
+	objs="$objs `grep -v '\.lib *$' "$f" || exit 0`"
+	libs="$libs `grep '\.lib *$' "$f" || exit 0`"
+	;;
+      *)
+	objs="$objs $f"
+	;;
+    esac
+  done
+  build_ifchanged load $1.o $objs $libs
+  for i in $libs
+  do
+    libscat="$libscat "'`'"cat $i"'`'
+  done
+  eval ./load $3 $1 $objs $libscat
+  exit $?
+fi
+
+if test -r $1=s
+then
+  build_ifchanged $1=s makeinclude makescrip
+  scripts="`cat $1=s`"
+  if [ "X$scripts" = "X" ]
+  then
+    scripts="warn-auto.sh $1.sh"
+  fi
+#  build_ifchanged `./makeinclude deps $scripts`
+  build_ifchanged $scripts
+  build_ifchanged `./makeinclude deps $scripts`
+  # FIXME: plumb
+  ./makeinclude code $scripts | ./makescrip "$@"
+  chmod 755 $3
+  exit $?
+fi
+
+case $1 in
+  choose)
+    build_ifchanged warn-auto.sh choose.sh
+    cat warn-auto.sh choose.sh
+    chmod 755 $3
+    exit $?
+    ;;
+  compile)
+    build_ifchanged conf-cc print-compile.sh systype warn-auto.sh
+    sh print-compile.sh
+    chmod 755 $3
+    exit $?
+    ;;
+  it)
+    build_ifchanged "$1=d"
+    build_ifchanged `awk '{ print $1; }' <"$1=d"`
+    build_notarget
+    exit 0
+    ;;
+  rts)
+    if [ -r "$1=d" ]
+    then
+      build_ifchanged "$1=d"
+      build_ifchanged `awk '{ print $1; }' <$1=d`
+    else
+      build_ifcreated "$1=d"
+    fi
+    rm -f "$1.out"
+    sh "$1.run" 2>&1 | cat -v >"$1.out"
+    diff "$1.exp" "$1.out" || {
+      echo "Test $1 failed.  Run diff $1.exp $1.out" >&2
+      exit 1
+    }
+    build_notarget
+    exit 0
+    ;;
+  load)
+    build_ifchanged conf-ld print-load.sh warn-auto.sh
+    sh print-load.sh
+    chmod 755 $3
+    exit $?
+    ;;
+#  loads)
+#    _uild-ifchanged conf-lds print-lds.sh systype warn-auto.sh
+#    rm -f loads
+#    sh print-lds.sh
+#    chmod 755 $3
+#    exit 0
+#    ;;
+  makelib)
+    build_ifchanged print-ar.sh systype warn-auto.sh
+    sh print-ar.sh
+    chmod 755 $3
+    exit $?
+    ;;
+  makeinclude)
+    build_ifchanged makeinclude.sh warn-auto.sh
+    cat warn-auto.sh makeinclude.sh
+    chmod 755 $3
+    exit $?
+    ;;
+  makescrip)
+    build_ifchanged warn-auto.sh print-makescrip.sh conf-scrip
+    build_ifchanged `sed -e '/^$/q' -e '/^dep#/!d' -e 's/^dep#//' < conf-scrip`
+    sh print-makescrip.sh < conf-scrip
+    chmod 755 $3
+    exit $?
+    ;;
+  systype)
+    build_ifchanged find-systype.sh trycpp.c x86cpuid.c
+    sh find-systype.sh
+    exit $?
+    ;;
+  mkfile)
+    build_ifchanged mkfile=d
+    build_ifchanged `awk '{ print $1 }' <"$1=d"`
+    safe printf "\n%s\n" "default: it"
+    safe build_info | safe awk '
+      BEGIN {
+	target = ""
+	build = ""
+	base = ""
+	state = 0
+      }
+      3 == state && "" == $1 {
+	if ("" == target || "" == build) exit 111
+	printf("\n\tsh makefile.build %s %s %s\n",build,target,base)
+	target = ""
+	build = ""
+	base = ""
+	state = 0
+	next
+      }
+      0 == state { target = $1; printf("\n%s:",target); state = 1; next }
+      1 == state { build = $1; state = 2; next }
+      2 == state { base = $1; state = 3; next }
+      { printf(" \\\n%s",$1); next }
+    ' target="$f"
+    safe printf "\n%s:\n\t%s" 'clean' 'rm -f'
+    safe build_list | safe awk '
+      { printf(" \\\n\t%s",$1) }
+      END { print "" }
+    '
+    exit $?
+    ;;
+esac
+
+build_failed "no such target"
+

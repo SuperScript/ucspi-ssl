@@ -1,0 +1,35 @@
+= https@ (1)
+:doctype: manpage
+
+== NAME
+https@ - connect to an SSL socket and print all data received
+
+== SYNOPSIS
+!!!!
+https@ _host_ _page_ _port_ _args_
+!!!!
+
+== DESCRIPTION
+The +https@+ program connects to +_host_+ on +_port_+ via TCP, and
+then establishes an SSL connection.  It sends the request:
+!!!!
+GET /_page_ HTTP/1.0
+Host: _host_
+!!!!
+and prints the body of the response, removing the CR from the end of each line.
+
+If +_port_+ is not supplied, +https@+ uses TCP port 443 (HTTPS).
+
+If +_host_+ is not supplied, +https@+ connects uses +localhost+.
+
+If +_args_+ are supplied, they are passed unmodified as options to +sslclient+.
+
+== EXIT STATUS
+The +https@+ program exits 111 for temporary errors and 100 for permanent
+errors.  It exits 0 on success.
+
+== EXAMPLES
+!!!!
+https@ www.example.com 443
+!!!!
+

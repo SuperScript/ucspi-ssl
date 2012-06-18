@@ -1,0 +1,59 @@
+= sslperl (1)
+:doctype: manpage
+
+== NAME
+sslperl - A preforking ssl server using embedded Perl
+
+== SYNOPSIS
+!!!!
+sslperl _opts_ _file_ _prog_
+!!!!
+
+== DESCRIPTION
+The +sslperl+ program is preforks servers listening for SSL client connections.
+For each such connection it receives, it executes the subroutine and arguments
+given in _prog_ from Perl code in the file +_file_+.
+
+The +sslperl+ program forks the requested number of children, each listening
+for TCP client connections.  Before handling any requests, each child parses and
+runs the perl code in +_file_+.  The file should end with a true expression,
+like a module.
+
+To handle a request, a child process executes +_prog_+ as a perl
+subroutine, with file descriptor~0 reading from the network and file
+descriptor~1 writing to the network.  Before handling the request, the
+child sets certain link:environment.html[environment variables], a la
+link:sslserver.html[+sslserver+].
+
+Each invocation of +_prog_+ handles a single request.  It is called
+within a loop, with one iteration per request, and therefore must
+release any resources allocated to handle a particular request.
+
+If +_prog_+ exits while handling a request, +sslperl+ will
+start a new child process.
+
+
+=== CONFIGURATION
+Edit the following files in +src/+ as necessary for your installation.
+Unless you use modules that require +xs+ support or a nonstandard version of
+perl, the defaults should suffice.
+
++sslperl.c+::
+If your server uses a module like +DBI.pm+ you may need to add the requisite
++xs+ code.
+
++conf-ldperl+::
+Determine options required to load +sslperl+.  By default, these are
+calculated automatically.  Using +xs+ code in +src/sslperl.c+ may
+require manual option setting in +src/conf-ldperl+.
+
++conf-ccperl+::
+Determine options required to compile +sslperl+.  By default, these are
+calculated automatically.
+
++conf-perl+::
+How to invoke perl to calculate options automatically in +conf-ccperl+ and
++conf-ldperl+.
+
+
+

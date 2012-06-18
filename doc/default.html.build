@@ -1,0 +1,6 @@
+build_ifchanged "$2.txt" asciidoc.conf webpage.conf attribute.conf
+safe asciidoc -f asciidoc.conf -f webpage.conf -f attribute.conf -o - \
+  -a disable-javascript=True -a toc\! -a linkcss=True \
+  "$2.txt"
+exit $?
+

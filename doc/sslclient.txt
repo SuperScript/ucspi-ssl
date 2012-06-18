@@ -1,0 +1,155 @@
+= sslclient (1)
+:doctype: manpage
+
+== NAME
+sslclient - connect to an SSL socket and run a command
+
+== SYNOPSIS
+!!!!
+sslclient _opts_ _host_ _port_ _prog_
+!!!!
+
+== DESCRIPTION
+The +sslclient+ attempts to connect to an SSL socket at +_host port_+.  If
+the connection succeeds, +sslclient+ runs +_prog_+, with file descriptor
+6 and 7 reading from and writing to a child process.  The child process process
+attempts an SSL connect via the network.  If it succeeds, it translates data
+between +_prog_+ and the network, performing any necessary SSL encoding and
+decoding.  Before running +_prog_+, +sslclient+ sets certain
+link:environment.html[environment variables].
+
+== OPTIONS
+
+=== GENERAL OPTIONS
++-q+::
+Quiet.  Do not print error messages.
+
++-Q+::
+(Default.)  Print error messages.
+
++-v+::
+Verbose.  Print error messages and status messages.
+
+=== CONNECTION OPTIONS
++-T _x_+_y_+::
+Give up on the connection attempt or SSL connection attempt after +_x_+_y_+
+seconds.  The default value is: 2+58.  When a host has several IP addresses,
++sslclient+ tries to connect to the first IP address, waits +_x_+ seconds, tries
+to connect to the second IP address, waits +_x_+ seconds, etc.; then it retries
+each address that timed out, waiting +_y_+ seconds per address.  You may omit
+++_y_+ to skip the second try.
+
++-i _localip_+::
+Use +_localip_+ as the IP address for the local side of the connection; quit if
++_localip_+ is not available.  Normally +sslclient+ lets the operating system
+choose an address.
+
++-p _localport_+::
+Use +_localport_+ as the TCP port for the local side of the connection; quit if
++_localport_+ is not available.  Normally +sslclient+ lets the operating system
+choose a port.
+
++-d+::
+Delay sending data for a fraction of a second whenever the remote host is
+responding slowly.  This is currently the default, but it may not be in the
+future; if you want it, set it explicitly.
+
++-D+::
+Never delay sending data; enable +TCP_NODELAY+.
+
++-3+::
+Read a null-terminated key password from file descriptor 3.
+
++-a _cafile_+::
+Override the compiled-in CA file name.  The CA file contains the list of CAs
+used to verify the server certificate.
+
++-A _cadir_+::
+Override the compiled-in CA directory name.  The CA directory contains
+certificates files used to verify the client certificate.  This list augments
+the list from +-a _cafile_+.
+
++-c _certfile_+::
+Use the client certificate in +_certfile_+.
+
++-k _keyfile_+::
+Use the client certificate key in +_keyfile_+.
+
++-V _verifydepth_+::
+Verify the server certificate chain to depth +_verifydepth_+.  The default value
+is 1.
+
++-C _ciphers_+::
+Use the cipher list specified in +_ciphers_+.
+
++-x+::
+(Default.) Verify the server certificate.
+
++-X+::
+Do not verify the server certificate.
+
+=== DATA-GATHERING OPTIONS
++-h+::
+(Default.) Look up the remote host name in DNS to set the environment variable
++$SSLREMOTEHOST+.
+
++-H+::
+Do not look up the remote host name in DNS; remove the environment variable
++$SSLREMOTEHOST+.
+
++-n+::
+(Default.) Verify that the server host name matches the server certificate
+common name.
+
++-N+::
+Do not verify that the server host name matches the server certificate common
+name.
+
++-l _localname_+::
+Do not look up the local host name in DNS; use +_localname_+ for the environment
+variable +$SSLLOCALHOST+.  A common choice for +_localname_+ is 0.
+
++-r+::
+(Default.) Attempt to obtain +$SSLREMOTEINFO+ from the remote host.
+
++-R+::
+Do not attempt to obtain +$SSLREMOTEINFO+ from the remote host.
+
++-t _n_+::
+Give up on the +$SSLREMOTEINFO+ connection attempt after +_n_+ seconds.  The
+default value is: 26.
+
++-w _n_+::
+Give up on a connection or program after waiting +_n_+ seconds for read or
+write.  The default value is: 3600.
+
++-s+::
+Store client and server certificate information in the environment, a la
+http://httpd.apache.org/docs-2.0/mod/mod_ssl.html[+mod_ssl+].
+
++-S+::
+(Default.) Do not store client and server certificate information in the
+environment.
+
++-e+::
+Set protocol environment a la
+http://cr.yp.to/ucspi-tcp/tcpserver.html[+tcpserver+].  Set +$TCPLOCALIP+,
++$TCPLOCALPORT+, +$TCPLOCALHOST+, +$TCPREMOTEIP+, +$TCPREMOTEPORT+,
++$TCPREMOTEHOST+, and +$TCPREMOTEINFO+ from the corresponding +$SSL+
+variables.
+
++-E+::
+(Default.) Do not set any +tcpserver+ environment variables.
+
+== EXIT STATUS
+The +sslclient+ program exits 111 for temporary errors and 100 for permanent
+errors.  It exits 0 on success.
+
+== EXAMPLES
+!!!!
+sslserver localhost 10443 sh -c '
+  cat >&7
+  exec cat <&6
+'
+!!!!
+

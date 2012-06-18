@@ -1,0 +1,209 @@
+= sslserver (1)
+:doctype: manpage
+
+== NAME
+sslserver - listen to an SSL socket and run a command for each connection
+
+== SYNOPSIS
+!!!!
+sslserver _opts_ _host_ _port_ _prog_
+!!!!
+
+== DESCRIPTION
+The +sslserver+ program listens to an SSL socket on +_host_+ and +_port_+.  When
+a client connects, it runs +_prog_+ with file descriptors 0 and 1 reading from
+and writing to a child process. The child process attempts an SSL accept via the
+network. If it succeeds, it translates data between prog and the network,
+performing any necessary SSL encoding and decoding.  Before running +_prog_+,
++sslserver+ sets certain link:environment.html[environment variables].
+
+== OPTIONS
+
+=== GENERAL OPTIONS
++-q+::
+Quiet.  Do not print error messages.
+
++-Q+::
+(Default.)  Print error messages.
+
++-v+::
+Verbose.  Print error messages and status messages.
+
+=== CONNECTION OPTIONS
++-a+::
+Switch user ID or group ID after reading SSL certificates.
+
++-A+::
+(Default.) Switch user ID or group ID before reading SSL certificates.
+
++-b _n_+::
+Allow a backlog of approximately +_n_+ pending connections.
+
++-B _banner_+::
+Write +_banner_+ to the network immediately after each SSL connection is made.
+The banner is subject to SSL translation.
+
++-c _n_+::
+Do not handle more than +_n_+ simultaneous connections.  If there are +_n_+
+simultaneous connections copies of +prog+ running, defer acceptance of a new
+connection until one copy finishes.  +_n_+ must be a positive integer.  The
+default value is 40.
+
++-d+::
+Delay sending data for a fraction of a second whenever the remote host is
+responding slowly.  This is currently the default, but it may not be in the
+future; if you want it, set it explicitly.
+
++-D+::
+Never delay sending data; enable +TCP_NODELAY+.
+
++-g _gid_+::
+Switch group ID to +_gid_+ after preparing to receive connections.  NB: +_gid_+
+must be a positive integer.
+
++-i+::
+Require valid client certificates.
+
++-I+::
+(Default.) Do not require client certificates.
+
++-o+::
+Leave IP options alone. If the client is sending packets along an IP source
+route, send packets back along the same route. 
+
++-O+::
+(Default.) Kill IP options. A client can still use source routing to connect and
+to send data, but packets will be sent back along the default route. 
+
++-u _uid_+::
+Switch user ID to +_uid_+ after preparing to receive connections.  NB: +_uid_+
+must be a positive integer.
+
++-U+::
+Same as +-g $GID -u $UID+.  Typically, +$GID+ and +$UID+ are set by
+http://cr.yp.to/daemontools/envuidgid.html[+envuidgid+].
+
++-x _cdb_+::
+Follow the rules compiled into +_cdb_+ by
+http://cr.yp.to/ucspi-tcp/tcprules.html[+tcprules+].  These rules may specify
+setting environment variables or rejecting connections from bad sources.  You
+can rerun +tcprules+ to change the rules while +sslserver+ is running.
+
++-X+::
+With +-x _cdb_+, allow connections even if +_cdb_+ does not exist.  Normally
++sslserver+ will drop the connection if +_cdb_+ does not exist.
+
++-1+::
+After preparing to receive connections, print the local port number to standard
+output.
+
++-3+::
+Read a null-terminated key password from file descriptor 3.
+
+=== DATA-GATHERING OPTIONS
+
++-e+::
+Set protocol environment a la
+http://cr.yp.to/ucspi-tcp/tcpserver.html[+tcpserver+].  Set +$TCPLOCALIP+,
++$TCPLOCALPORT+, +$TCPLOCALHOST+, +$TCPREMOTEIP+, +$TCPREMOTEPORT+,
++$TCPREMOTEHOST+, and +$TCPREMOTEINFO+ from the corresponding +$SSL+
+variables.
+
++-E+::
+(Default.) Do not set any +tcpserver+ environment variables.
+
++-h+::
+(Default.) Look up the remote host name in DNS to set the environment variable
++$SSLREMOTEHOST+.
+
++-H+::
+Do not look up the remote host name in DNS; remove the environment variable
++$SSLREMOTEHOST+.  To avoid loops, you _must_ use this option for servers on
+TCP port 53.
+
++-l _localname_+::
+Do not look up the local host name in DNS; use +_localname_+ for the environment
+variable +$SSLLOCALHOST+.  A common choice for +_localname_+ is 0.  To avoid
+loops, you _must_ use this option for servers on TCP port 53.
+
++-p+::
+Paranoid.  After looking up the remote host name in DNS, look up the IP
+addresses in DNS for that host name, and remove the environment variable
++$SSLREMOTEHOST+ if none of the addresses match the client's IP address.
+
++-P+::
+(Default.) Not paranoid.
+
++-r+::
+(Default.) Attempt to obtain +$SSLREMOTEINFO+ from the remote host.
+
++-R+::
+Do not attempt to obtain +$SSLREMOTEINFO+ from the remote host.  To avoid
+loops, you _must_ use this option for servers on TCP ports 53 and 113.
+
++-s+::
+Store client and server certificate information in the environment, a la
+http://httpd.apache.org/docs-2.0/mod/mod_ssl.html[+mod_ssl+].
+
++-S+::
+(Default.)
+Do not store client and server certificate information in the environment.
+
++-t _n_+::
+Give up on the +$SSLREMOTEINFO+ connection attempt after +_n_+ seconds.  The
+default value is: 26.
+
++-T _n_+::
+Give up on the SSL connection attempt after +_n_+ seconds.  The default value
+is: 26.
+
++-w _n_+::
+Give up on a connection or program after waiting +_n_+ seconds for read or
+write.  The default value is: 3600.
+
+=== SSL OPTIONS
++$CADIR+::
+If set, overrides the compiled-in CA directory name.  The CA directory contains
+certificates files used to verify the client certificate.  This list augments
+the list from +$CAFILE+.  Certificates in +$CADIR+ are processed during
+certificate verification.  A server running with the +-a+ option may not be able
+to read certificates in +$CADIR+.
+
++$CAFILE+::
+If set, overrides the compiled-in CA file name.  The CA file contains the list
+of CAs used to verify the client certificate.  Certificates in +$CAFILE+ are
+processed when the server starts.
+
++$CCAFILE+::
+If set, overrides the compiled-in client CA file name for client certificate
+request.  The client CA file contains the list of CAs sent to the client when
+requesting a client certificate.
+
++$CERTFILE+::
+If set, overrides the compiled-in certificate file name.  The server presents
+this certificate to clients.
+
++$CIPHERS+::
+If set, override the compiled-in SSL cipher list.
+
++$DHFILE+::
+If set, overrides the compiled-in DH parameter file name.
+
++$KEYFILE+::
+If set, overrides the compiled-in key file name.  The key is used when loading
+the server certificate.  Setting +$KEYFILE+ to the empty string instructs the
+server not to use a keyfile when loading its certificate.
+
++$VERIFYDEPTH+::
+If set, overrides the compiled-in verification depth.
+
+== EXIT STATUS
+The +sslserver+ program exits 111 for temporary errors and 100 for permanent
+errors.  It exits 0 on success or when terminated by signal.
+
+== EXAMPLES
+!!!!
+sslserver localhost 10443 echo \'Hello world!'
+!!!!
+
+

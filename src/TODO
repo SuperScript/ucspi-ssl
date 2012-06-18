@@ -3,3 +3,5 @@ Options for looser verification.
 Program like stunnel.
 Rules tests.
 SSL connection caching.
+Replace mconnect-io use in sslconnect.
+Rework sslperl build.

@@ -1,0 +1,52 @@
+= Preforking Servers
+
+== Creating preforking servers with +sslhandle.c+
+
+The +sslhandle.c+ program provides a framework for compiling preforking
+link:sslserver.html[+sslserver+]-like servers.
+
+Each sslhandle server accepts all +sslserver+ options, and in addition:
++-f _lockfile_+::
+Lock +_lockfile_+ around calls to +accept+.
+
+Utilize this option if your +accept+ system call suffers from the thundering
+herd problem.
+
+The concurrency option (+-c+) sets the number of children that a sslhandle
+server forks upon startup.  The default setting is 1.  Each child process
+listens for requests on the socket inherited from the parent process.
+
+If any of its child processes exits, a sslhandle server forks a new child
+process to replace the original.  When it receives SIGTERM, a sslhandle server
+sends SIGTERM to each of its children, waits for them to exit, and then itself
+exits.
+
+Before handling an accepted request, a sslhandle server sets certain
+link:environment.html[environment variables], a la
+link:sslserver.html[+sslserver+].
+
+== Server execution
+
+The sslhandle server invokes a +server+ subroutine for each request.  The
+subroutine reads from the network on file descriptor 0 and writes to the network
+on file descriptor 1:
+!!!!
+void server(int argc,char * const *argv)
+!!!!
+The arguments to +server+ are the command line arguments to the sslhandle server
+that remain after option parsing.
+
+The +server+ subroutine is called within a loop, with one iteration per request.
+It must release any resources allocated to handle a particular request before
+returning to its caller.
+
+== Compiling a preforking server
+
+Create a file +src/myserver.c+ that implements the +server+ subroutine.  Create
+a control file +src/myserver=x+ listing all necessary dependencies.  Then
+!!!!
+package/build myserver
+!!!!
+
+The ucspi-ssl package includes the example server link:sslperl.html[+sslperl+].
+

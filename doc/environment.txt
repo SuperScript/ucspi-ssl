@@ -1,0 +1,238 @@
+= ucspi-ssl-environment (7)
+:doctype: manpage
+
+== NAME
+ucspi-ssl-environment - The ucspi-ssl environment variables
+
+== DESCRIPTION
+
+=== STANDARD ENVIRONMENT VARIABLES
+
+The ucspi-ssl servers and clients set the following environment variables:
+
++$PROTO+::
+The string +SSL+.
+
++$SSLLOCALHOST+::
+The name listed in DNS for the local host.  If no name is available,
++$SSLLOCALHOST+ is not set. Beware that +$SSLLOCALHOST+ can contain
+arbitrary characters.
+
++$SSLLOCALIP+::
+The IP address of the local host, in dotted-decimal format.
+
++$SSLLOCALPORT+::
+The local TCP port number, in decimal.
+
++$SSLREMOTEHOST+::
+The name listed in DNS for the remote host.  If
+no name is available, +$SSLREMOTEHOST+ is not set. Beware that
++$SSLREMOTEHOST+ can contain arbitrary characters.
+
++$SSLREMOTEINFO+::
+A connection-specific string supplied by the remote
+host via the 931/1413/IDENT/TAP protocol.  If no information is available,
++$SSLREMOTEINFO+ is not set.  Beware that +$SSLREMOTEINFO+ can
+contain arbitrary characters.
+
++$SSLREMOTEIP+::
+The IP address of the remote host, in
+dotted-decimal format.
+
++$SSLREMOTEPORT+::
+The remote TCP port number, in decimal.
+
+
+=== ENVIRONMENT FOR COMPATIBILITY WITH UCSPI-TCP
+When invoked with the argument +-e+, +sslserver+ and sslhandle-based servers set
+the following ucspi-tcp environment variables to their corresponding ucspi-ssl
+values:
+
++$TCPLOCALHOST+::
++$SSLLOCALHOST+
+
++$TCPLOCALIP+::
++$SSLLOCALIP+
+
++$TCPLOCALPORT+::
++$SSLLOCALPORT+
+
++$TCPREMOTEHOST+::
++$SSLREMOTEHOST+
+
++$TCPREMOTEINFO+::
++$SSLREMOTEINFO+
+
++$TCPREMOTEIP+::
++$SSLREMOTEIP+
+
++$TCPREMOTEPORT+::
++$SSLREMOTEPORT+
+
+
+=== SSL ENVIRONMENT VARIABLES
+When invoked with the argument +-s+, +sslserver+ and sslhandle servers set the
+following SSL-related environment variables, similar to those set by
+http://httpd.apache.org/docs-2.0/mod/mod_ssl.html[+mod_ssl+].  Note that
++sslserver+ etc. do not set the +$HTTPS+ environment variable.
+
++$SSL_PROTOCOL+::
+The SSL protocol version in use.
+
++$SSL_SESSION_ID+::
+The current SSL session ID, hex encoded.
+
++$SSL_CIPHER+::
+The cipher in use.
+
++$SSL_CIPHER_ALGKEYSIZE+::
+The number of bits permitted in the cipher.
+
++$SSL_CIPHER_USEKEYSIZE+::
+The number of bits used in the cipher.
+
++$SSL_CIPHER_EXPORT+::
+The string "true" if +$SSL_CIPHER_USEKEYSIZE+ is less than 56,
+otherwise "false".
+
++$SSL_VERSION_INTERFACE+::
+The string "ucspi-ssl".
+
++$SSL_VERSION_LIBRARY+::
+The OpenSSL library version in use.
+
++$SSL_SERVER_A_KEY+::
+The signature algorithm used in the server key, if available, or "UNKNOWN".
+
++$SSL_SERVER_A_SIG+::
+The signature algorithm used in the server certificate, if available, or
+"UNKNOWN".
+
++$SSL_SERVER_CERT+::
+The server certificate.
+
++$SSL_SERVER_CERT_CHAIN___N__+::
+The list of certificates in the server verification chain.
+
++$SSL_SERVER_M_VERSION+::
+The server certificate version.
+
++$SSL_SERVER_M_SERIAL+::
+The server certificate serial number.
+
++$SSL_SERVER_V_START+::
+The server certificate validity start time.
+
++$SSL_SERVER_V_END+::
+The server certificate validity end time.
+
++$SSL_SERVER_S_DN+::
+The server certificate distinguished name subject.
+
++$SSL_SERVER_S_DN___X__+::
+The server certificate distinguished name component +_X_+, where
++_X_+ is one of
++C+,
++CN+,
++D+,
++Email+,
++G+,
++I+,
++L+,
++O+,
++OU+,
++S+,
++ST+,
++T+,
+and
++UID+.
+
++$SSL_SERVER_I_DN+::
+The server certificate issuer distinguished name subject.
+
++$SSL_SERVER_I_DN___X__+::
+The server certificate issuer distinguished name component +_X_+,
+where +_X_+ is one of
++C+,
++CN+,
++D+,
++Email+,
++G+,
++I+,
++L+,
++O+,
++OU+,
++S+,
++ST+,
++T+,
+and
++UID+.
+
++$SSL_CLIENT_A_KEY+::
+The signature algorithm used in the client key, if available, or "UNKNOWN".
+
++$SSL_CLIENT_A_SIG+::
+The signature algorithm used in the client certificate, if available, or
+"UNKNOWN".
+
++$SSL_CLIENT_CERT+::
+The client certificate.
+
++$SSL_CLIENT_CERT_CHAIN___N__+::
+The list of certificates in the client verification chain.
+
++$SSL_CLIENT_M_VERSION+::
+The certificate version.
+
++$SSL_CLIENT_M_SERIAL+::
+The certificate serial number.
+
++$SSL_CLIENT_V_END+::
+The client certificate validity start time.
+
++$SSL_CLIENT_V_START+::
+The client certificate validity end time.
+
+
++$SSL_CLIENT_S_DN+::
+The client certificate distinguished name subject.
+
++$SSL_CLIENT_S_DN___X__+::
+The client certificate distinguished name component +_X_+,
+where +_X_+ is one of
++C+,
++CN+,
++D+,
++Email+,
++G+,
++I+,
++L+,
++O+,
++OU+,
++S+,
++ST+,
++T+,
+and
++UID+.
+
++$SSL_CLIENT_I_DN+::
+The client certificate issuer distinguished name subject.
+
++$SSL_CLIENT_I_DN___X__+::
+The client certificate issuer distinguished name component +_X_+,
+where +_X_+ is one of
++C+,
++CN+,
++D+,
++Email+,
++G+,
++I+,
++L+,
++O+,
++OU+,
++S+,
++ST+,
++T+,
+and
++UID+.
+

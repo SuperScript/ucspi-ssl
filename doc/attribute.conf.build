@@ -1,0 +1,18 @@
+build_ifchanged ../package/name ../package/path ../package/versions
+
+printf '[attributes]\n'
+
+printf 'package='
+awk '1{print $1}' ../package/name
+
+printf 'path='
+awk '1{print $1}' ../package/path
+
+printf 'version='
+awk '{v=$1};END{print v}' ../package/versions
+
+printf 'revnumber='
+awk '{v=$1};END{print v}' ../package/versions
+
+exit 0
+

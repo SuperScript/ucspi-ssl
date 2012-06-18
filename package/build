@@ -1,0 +1,141 @@
+#!/bin/sh
+shout() { echo "package/build: $*" >&2; }
+barf() { shout "fatal: $*"; exit 111; }
+safe() { "$@" || barf "cannot $*"; }
+usage() {
+  shout "usage: package/build [ --help -v -q -f -F -c compile_dir -s src_dir -d dest_dir -b build_cmd ] [ target ... ]"
+  exit 100
+}
+
+# install_command dest src
+install_command() {
+  safe rm -f "$1"'{new}'
+  safe cp -p "$2" "$1"'{new}'
+  safe mv -f "$1"'{new}' "$1"
+}
+
+#### MAIN
+
+umask 022
+
+test "$1" = "--help" && usage
+
+here="`env - PATH=$PATH pwd`"
+
+compile_dir="compile"
+src_dir="src"
+dest_dir="command"
+remove=0
+build="build"
+
+verbose=""
+force=""
+while test $# -gt 0
+do
+  case "$1" in
+    -v)
+      verbose="$verbose -v"
+      shift
+      ;;
+    -q)
+      verbose="$verbose -q"
+      shift
+      ;;
+    -f)
+      force="-f"
+      shift
+      ;;
+    -F)
+      remove=1
+      shift
+      ;;
+    -c)
+      compile_dir="$2"
+      shift; shift
+      ;;
+    -s)
+      src_dir="$2"
+      shift; shift
+      ;;
+    -d)
+      dest_dir="$2"
+      shift; shift
+      ;;
+    -b)
+      build_command="$2"
+      shift; shift
+      ;;
+    -*)
+      usage
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+test -d "$src_dir" || barf "no src directory: $src_dir"
+test -d "$compile_dir" && test 0 -lt $remove && rm -rf "$compile_dir"
+
+# Link files into $compile_dir.
+safe mkdir -p "$compile_dir"
+test -h "$compile_dir/$src_dir" \
+  || safe ln -s "$here/$src_dir" "$compile_dir/$src_dir"
+
+safe ls "$src_dir" | while read f
+do
+  test -h "$compile_dir/$f" || safe ln -s "$src_dir/$f" "$compile_dir/$f"
+done
+
+# Build targets in $compile_dir.
+safe cd "$compile_dir"
+
+if test -z "$build_command" -o "build" = "$build_command"
+then
+  build_cmd="$build $verbose target $force"
+else
+  build_cmd="$build_command"
+fi
+
+if test 0 -lt $#
+then
+  safe $build_cmd "$@"
+else
+  safe $build_cmd it
+fi
+
+# Install commands.
+safe cd "$here"
+safe mkdir -p "$dest_dir"
+
+if test "src" = "$src_dir"
+then
+  commands_file="commands"
+else
+  commands_file="commands-$src_dir"
+fi
+
+test -r "package/$commands_file" || exit 0
+
+if test 0 -lt $#
+then
+  safe awk '
+    BEGIN {
+      for (i = 1;i < ARGC;++i)
+	file[ARGV[i]] = 1
+      ARGC = 1
+    }
+    { if (file[$1]) print $1 }
+  ' "$@" < "package/$commands_file" | while read f
+  do
+    safe install_command "$dest_dir/$f" "$compile_dir/$f"
+  done
+else
+  safe awk '$1 {print $1}' "package/$commands_file" | while read f
+  do
+    safe install_command "$dest_dir/$f" "$compile_dir/$f"
+  done
+fi
+
+exit 0
+

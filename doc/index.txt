@@ -1,0 +1,61 @@
+= Introduction
+
+Development of the ucspi-ssl package has stalled here at its original home.
+Fortunately others have stepped in to continue development and improve upon what
+came before.  Please refer to the <<sources,Related Software>> links below.
+
+== Installation
+
+* How to link:install.html[install] ucspi-ssl
+
+== Servers
+* The link:sslserver.html[+sslserver+] program
+
+== Clients
+* The link:sslcat.html[+sslcat+] program
+* The link:sslclient.html[+sslclient+] program
+* The link:sslconnect.html[+sslconnect+] program
+* The link:https@.html[+https@+] program
+
+== Preforking Servers
+* Creating link:prefork.html[preforking servers]
+* The link:sslperl.html[+sslperl+] program
+
+== General Information
+* The ucspi-ssl link:environment.html[environment variables]
+* The ucspi-ssl link:UCSPI-SSL[protocol description]
+
+== What Is ucspi-ssl?
+The ucspi-ssl package contains tools for building client-server applications
+using SSL sockets.  They conform to the UNIX Client-Server Program Interface,
+http://cr.yp.to/proto/ucspi.txt[UCSPI].
+
+== Features
+The +sslserver+ program listens for connections on an SSL socket and runs a
+program for each connection it accepts.  The program environment includes
+variables that hold the local and remote host names, IP addresses, and port
+numbers. The +sslserver+ program can limit concurrency and provide selective
+handling of connections based on client identity.
+
+The +sslclient+ program requests a connection to a TCP socket, and runs a
+program.  The program environment includes the same variables as for
++sslserver+.
+ 
+[[sources]]
+== Related Software
+The original UCSPI package by D.J. Bernstein,
+http://cr.yp.to/ucspi-tcp.html[ucspi-tcp].
+
+A local-domain socket UCSPI package,
+http://www.superscript.com/software/ucspi-ipc.html[ucspi-ipc].
+
+Scott Gifford's https://github.com/scottgifford/ucspi-ssl[ucspi-ssl].
+
+
+== License
+Files in this package are in the public domain.
+
+The {package} package comes with NO WARRANTY.
+
+
+

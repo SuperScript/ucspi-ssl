@@ -1,0 +1,13 @@
+#!/bin/sh
+shout() { echo "package/docs: $*" >&2; }
+barf() { shout "fatal: $*"; exit 111; }
+safe() { "$@" || barf "cannot $*"; }
+
+#### MAIN
+
+umask 022
+
+test -d package || barf "no package directory"
+exec package/build -c compile-doc -s doc -d html -b make ${1+"$@"}
+
+exit 111

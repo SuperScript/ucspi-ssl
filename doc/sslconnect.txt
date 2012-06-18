@@ -1,0 +1,39 @@
+= sslconnect (1)
+:doctype: manpage
+
+== NAME
+sslconnect - connect to an SSL socket and exchange data
+
+== SYNOPSIS
+!!!!
+sslconnect _host_ _port_ _args_
+!!!!
+
+== DESCRIPTION
+The +sslconnect+ program connects to +_host_+ on +_port_+ via TCP, and attempts an
+SSL connection.  It sends its standard input to the server, printing a CR after
+each LF, and prints any data it receives from the server to standard output.
+The +sslconnect+ program does no conversion other than SSL encoding and decoding
+on received data.
+
+If +_port_+ is not supplied, +sslconnect+ uses TCP port 443 (HTTPS).
+
+If +_host_+ is not supplied, +sslconnect+ connects uses +localhost+.
+
+If +_args_+ are supplied, they are passed unmodified as options to +sslclient+.
+
+== EXIT STATUS
+The +sslconnect+ program exits 111 for temporary errors and 100 for permanent
+errors.  It exits 0 on success.
+
+== EXAMPLES
+!!!!
+echo hello | sslconnect www.example.com 1443 -l0
+!!!!
+
+If +_port_+ is not supplied, +sslconnect+ uses TCP port 443 (HTTPS).
+
+If +_host_+ is not supplied, +sslconnect+ connects to the local host.
+
+If +_args_+ are supplied, they are passed to +sslclient+ unmodified.
+

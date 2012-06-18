@@ -1,0 +1,32 @@
+= sslcat (1)
+:doctype: manpage
+
+== NAME
+sslcat - connect to an SSL socket and print all data received
+
+== SYNOPSIS
+!!!!
+sslcat _host_ _port_ _args_
+!!!!
+
+== DESCRIPTION
+The +sslcat+ program connects to +_host_+ on +_port_+ via TCP, and then
+establishes an SSL connection.  It prints any data it receives.  The +sslcat+
+can be used to transfer binary data.  It does no conversion other than SSL
+encoding and decoding.
+
+If +_port_+ is not supplied, +sslcat+ uses TCP port 443 (HTTPS).
+
+If +_host_+ is not supplied, +sslcat+ connects uses +localhost+.
+
+If +_args_+ are supplied, they are passed unmodified as options to +sslclient+.
+
+== EXIT STATUS
+The +sslcat+ program exits 111 for temporary errors and 100 for permanent
+errors.  It exits 0 on success.
+
+== EXAMPLES
+!!!!
+sslcat www.example.com 443 -l0
+!!!!
+
