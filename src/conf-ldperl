@@ -1,6 +1,6 @@
 auto
 
-The loader arguments required for tcpperl.
+The loader arguments required for sslperl.
 All arguments must appear on a single line.
 If the word "auto" appears, use the output from
 

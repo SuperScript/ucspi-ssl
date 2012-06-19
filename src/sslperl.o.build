@@ -1,0 +1,16 @@
+build_ifchanged compile conf-ccperl
+build_dependcc "sslperl.c"
+ccopts="`head -1 conf-ccperl`"
+case "$ccopts" in
+  auto)
+    build_ifchanged conf-perl
+    runperl="`head -1 conf-perl`"
+    ccopts="`$runperl -MExtUtils::Embed -e ccopts`"
+    ;;
+esac
+
+safe ./compile "$1" $ccopts "sslperl.c"
+build_notarget
+
+exit 0
+

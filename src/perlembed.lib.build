@@ -1,0 +1,14 @@
+build_ifchanged conf-perl conf-ldperl
+ldopts="`head -1 conf-ldperl`"
+
+case "$ldopts" in
+  auto)
+    runperl="`head -1 conf-perl`"
+    $runperl -MExtUtils::Embed -e ldopts
+    exit $?
+    ;;
+esac
+
+echo "$ldopts"
+
+exit 0
