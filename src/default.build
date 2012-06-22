@@ -67,7 +67,7 @@ case $1 in
     if [ -r "$1=d" ]
     then
       build_ifchanged "$1=d"
-      build_ifchanged `awk '{ print $1; }' <$1=d`
+      build_ifchanged `awk '{ print $1; }' <"$1=d"`
     else
       build_ifcreated "$1=d"
     fi

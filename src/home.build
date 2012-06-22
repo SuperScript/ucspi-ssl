@@ -1,5 +1,5 @@
 # For base-dir build:
-pwd
+#env - pwd
 
 ## For package build:
-# cd .. && pwd
+dirname "`env - pwd`"
