@@ -1,6 +1,35 @@
 # Assumptions:
 #   available TCP ports on 127.0.0.1: 50022
 
+CADIR=""
+CAFILE="`pwd`/ucspi.ca"
+CERTFILE="`pwd`/127.0.0.1.cert"
+KEYFILE="`pwd`/127.0.0.1.key"
+CCAFILE="`pwd`/localhost.cert"
+CCERTFILE="`pwd`/localhost.cert"
+CKEYFILE="`pwd`/localhost.key"
+DHFILE="`pwd`/dh1024.pem"
+export CAFILE CCAFILE CERTFILE KEYFILE CCERTFILE CKEYFILE CADIR DHFILE
+
+PATH="`head -1 home`/command:$PATH"
+export PATH
+
+rm -rf sslperl.rts.work
+mkdir sslperl.rts.work
+cd sslperl.rts.work
+
+sanitize() {
+  sed -e 's/^SSL_SESSION_ID=.*/SSL_SESSION_ID=.../' \
+      -e 's/^SSLREMOTEPORT=.*/SSLREMOTEPORT=.../' \
+      -e 's/^SSLLOCALPORT=.*/SSLLOCALPORT=.../' \
+      -e 's/^TCPREMOTEPORT=.*/TCPREMOTEPORT=.../' \
+      -e 's/^TCPLOCALPORT=.*/TCPLOCALPORT=.../' \
+      -e 's/^SSL_VERSION_LIBRARY=.*/SSL_VERSION_LIBRARY=.../' \
+      -e 's/^SSL_CIPHER_USEKEYSIZE=.*/SSL_CIPHER_USEKEYSIZE=.../' \
+      -e 's/^SSL_CIPHER_ALGKEYSIZE=.*/SSL_CIPHER_ALGKEYSIZE=.../' \
+      -e 's/^SSL_CIPHER=.*/SSL_CIPHER=.../'
+}
+
 echo 'package Embedded::test;
 my $n = 0;
 $| = 1;

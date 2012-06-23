@@ -22,9 +22,9 @@ export CAFILE CCAFILE CERTFILE KEYFILE CCERTFILE CKEYFILE CADIR DHFILE
 PATH="`head -1 home`/command:$PATH"
 export PATH
 
-rm -rf rts-tmp
-mkdir rts-tmp
-cd rts-tmp
+rm -rf it.rts.work
+mkdir it.rts.work
+cd it.rts.work
 
 echo '#!/bin/sh
   trap "" 13

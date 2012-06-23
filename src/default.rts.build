@@ -1,0 +1,12 @@
+# whatever.rts
+# e.g. it.rts
+# assumes it.command target
+
+build_ifchanged "$2.command"
+
+# Ignore errors.
+sh "$1.run" "$1" 2>&1 | cat -v > "$1.out"
+diff "$1.out" "$1.exp" || shout "test $1 failed; run diff $1.out $1.exp"
+
+build_notarget
+exit 0

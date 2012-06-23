@@ -63,23 +63,6 @@ case $1 in
     build_notarget
     exit 0
     ;;
-  rts)
-    if [ -r "$1=d" ]
-    then
-      build_ifchanged "$1=d"
-      build_ifchanged `awk '{ print $1; }' <"$1=d"`
-    else
-      build_ifcreated "$1=d"
-    fi
-    rm -f "$1.out"
-    sh "$1.run" 2>&1 | cat -v >"$1.out"
-    diff "$1.exp" "$1.out" || {
-      echo "Test $1 failed.  Run diff $1.exp $1.out" >&2
-      exit 1
-    }
-    build_notarget
-    exit 0
-    ;;
   load)
     build_ifchanged conf-ld print-load.sh warn-auto.sh
     sh print-load.sh
