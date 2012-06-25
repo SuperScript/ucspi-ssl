@@ -1,12 +1,12 @@
 #!/bin/sh
-shout() { echo "package/install: $@" >&2; }
-barf() { shout "fatal: $@"; exit 111; }
-safe() { "$@" || barf "cannot $@"; }
+shout() { echo "package/install: $*" >&2; }
+barf() { shout "fatal: $*"; exit 111; }
+safe() { "$@" || barf "cannot $*"; }
 
 #### MAIN
 
-safe package/compile
-safe package/upgrade
-safe package/run
+safe package/compile ${1+"$1"}
+safe package/upgrade ${1+"$1"}
+safe package/run ${1+"$1"}
 
 exit 0

@@ -1,4 +1,8 @@
 # Copy executables to command/
+#
+# Example: default.command.build it.command it it.command.tmp
+# Build it.
+# Copy files listed in it.command=d || it=d.
 
 # install_command dest src
 install_command() {

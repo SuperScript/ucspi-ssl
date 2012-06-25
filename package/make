@@ -1,0 +1,2 @@
+#!/bin/sh
+exec package/build -b make ${1+"$@"}

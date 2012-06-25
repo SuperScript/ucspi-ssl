@@ -1,5 +1,6 @@
 
-default: it
+default: \
+it.www
 
 attribute.conf: \
 attribute.conf.build \
@@ -52,8 +53,14 @@ sslconnect.html \
 https@.html \
 prefork.html \
 environment.html \
-sslperl.html
+sslperl.html \
+UCSPI-SSL
 	sh makefile.build default.build it it
+
+it.www: \
+default.www.build \
+it
+	sh makefile.build default.www.build it.www it
 
 mkfile: \
 default.build \
@@ -117,6 +124,7 @@ clean:
 	index.html \
 	install.html \
 	it \
+	it.www \
 	mkfile \
 	prefork.html \
 	sslcat.html \

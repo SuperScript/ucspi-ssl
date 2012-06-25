@@ -1,0 +1,85 @@
+# Copy and link executables to destination directories.
+#
+# Example: default.install.build it.install it it.install.tmp
+# Build it.
+# Copy files listed in it.install=d || it.command || it=d.
+
+
+umask 022
+here="`env - PATH="$PATH" pwd`"
+pkgdir="`dirname "$here"`"
+
+name="`awk '$1{print $1; exit 0}' ../package/name`"
+package="`basename "$name"`"
+current="`basename "$pkgdir"`"
+parent="`dirname "$here"`"
+
+# ln_command destdir file
+ln_command() {
+  safe mkdir -p "$1"
+  safe rm -f "$1/$2"'{new}'
+  safe ln -s "$parent/command/$2" "$1/$2"'{new}'
+  safe mv -f "$1/$2"'{new}' "$1/$2"
+}
+
+# cp_command destdir file
+cp_command() {
+  safe mkdir -p "$1"
+  safe rm -f "$1/$2"'{new}'
+  safe cp -p "$parent/command/$2" "$1/$2"'{new}'
+  safe mv -f "$1"'{new}' "$1/$2"
+}
+
+op_list() {
+  safe awk '
+    BEGIN {
+      for (i = 1;i < ARGC;++i)
+	d[i] = ARGV[i]
+      ARGC = 1
+    }
+    $1 {
+      for (i = 1;i <= length(d);++i)
+	print d[i], $1
+    }
+  ' `awk '$1{print $1; next};{exit 0}' "$1"` < "$2"
+}
+
+#### MAIN
+
+# Rebuild underlying commands.
+# No other dependency declarations needed, because of build_notarget.
+build_ifchanged "$2.command"
+
+if test -r "$1=d"
+then
+  listfile="$1=d"
+else if test -r "$2.command=d"
+then
+  listfile="$2.command=d"
+else
+  listfile="$2=d"
+fi fi
+
+# Link only if working in versioned directory.
+if test "$current" != "$package"
+then
+  safe cd "$pkgdir"
+  safe rm -f "$package"
+  safe ln -s "$current" "$package"
+  safe mv -f "$package" ..
+  safe cd "$here"
+fi
+
+op_list ../package/command-ln "$listfile" | while read d s
+do
+  ln_command "$d" "$s"
+done
+
+op_list ../package/command-cp "$listfile" | while read d s
+do
+  cp_command "$d" "$s"
+done
+
+build_notarget
+exit 0
+

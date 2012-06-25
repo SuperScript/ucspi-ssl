@@ -8,6 +8,6 @@ safe() { "$@" || barf "cannot $*"; }
 umask 022
 
 test -d package || barf "no package directory"
-exec package/build -c compile-doc -s doc -d html -b make ${1+"$@"}
+exec package/build -c compile-doc -s doc -b make ${1+"$@"}
 
 exit 111

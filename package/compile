@@ -1,11 +1,23 @@
 #!/bin/sh
-shout() { echo "package/compile: $@" >&2; }
-barf() { shout "fatal: $@"; exit 111; }
+shout() { echo "package/compile: $*" >&2; }
+barf() { shout "fatal: $*"; exit 111; }
 
 #### MAIN
 
 test -d package || barf "no package directory"
-exec package/build -b make ${1+"$@"}
 
-exit 111
+if test 0 -eq $#
+then
+  exec package/build -b make `awk '$1{print $1".command"}' < build=d`
+fi
+
+exec package/build -b make `awk '
+  BEGIN {
+    for (i = 1;i < ARGC;++i)
+      print ARGV[i]".command"
+    exit 0
+  }
+' "$@"`
+
+barf "cannot compile $*"
 

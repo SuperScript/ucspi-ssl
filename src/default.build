@@ -102,8 +102,12 @@ case $1 in
     ;;
   mkfile)
     build_ifchanged mkfile=d
-    build_ifchanged `awk '{ print $1 }' <"$1=d"`
-    safe printf "\n%s\n" "default: it"
+    build_ifchanged `awk '$1{ print $1 }' <"$1=d"`
+    safe printf "\n%s" "default:"
+    safe awk '
+      $1{ printf(" \\\n%s",$1) }
+      END { print "" }
+    ' < build=d
     safe build_info | safe awk '
       BEGIN {
 	target = ""

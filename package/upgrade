@@ -1,70 +1,24 @@
 #!/bin/sh
-shout() { echo "package/upgrade: $@" >&2; }
-barf() { shout "fatal: $@"; exit 111; }
-safe() { "$@" || barf "cannot $@"; }
-usage() {
-  shout "usage: package/upgrade"
-  exit 100
-}
-
-ln_command() {
-  safe rm -f "$1"'{new}'
-  safe ln -s "$2" "$1"'{new}'
-  safe mv -f "$1"'{new}' "$1"
-}
-
-cp_command() {
-  safe rm -f "$1"'{new}'
-  safe cp -p "$2" "$1"'{new}'
-  safe mv -f "$1"'{new}' "$1"
-}
+shout() { echo "package/upgrade: $*" >&2; }
+barf() { shout "fatal: $*"; exit 111; }
 
 #### MAIN
 
-umask 022
 test -d package || barf "no package directory"
 test -d compile || barf "no compile directory"
 
-here="`env - PATH="$PATH" pwd`"
-
-name="`awk '$1{print $1; exit 0}' package/name`"
-package="`basename "$name"`"
-current="`basename "$here"`"
-parent="`dirname "$here"`"
-
-# Link only if working in versioned directory.
-if test "$current" != "$package"
+if test 0 -eq $#
 then
-  safe rm -f "$package"
-  safe ln -s "$current" "$package"
-  safe mv -f "$package" ..
+  exec package/build -b make `awk '$1{print $1".install"}' < build=d`
 fi
 
-# Link non-private commands into other directories.
-if test -r package/command-ln
-then
-  awk '$1{print $1; next};{exit 0}' package/command-ln | while read d
-  do
-    safe mkdir -p "$d"
-    safe awk '"PRIVATE" != $2 && "" != $1 { print $1 }' package/commands | while read f
-    do
-      safe ln_command "$d/$f" "$parent/$package/command/$f"
-    done
-  done
-fi
+exec package/build -b make `awk '
+  BEGIN {
+    for (i = 1;i < ARGC;++i)
+      print ARGV[i]".install"
+    exit 0
+  }
+' "$@"`
 
-# Copy non-private commands into other directories.
-if test -r package/command-cp
-then
-  awk '$1{print $1; next};{exit 0}' < package/command-cp | while read d
-  do
-    safe mkdir -p "$d"
-    safe awk '"PRIVATE" != $2 && "" != $1 { print $1 }' package/commands | while read f
-    do
-      safe cp_command "$d/$f" "$parent/$package/command/$f"
-    done
-  done
-fi
-
-exit 0
+barf "cannot upgrade $*"
 
