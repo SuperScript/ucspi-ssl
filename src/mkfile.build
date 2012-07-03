@@ -1,0 +1,81 @@
+build_ifchanged mkfile=d
+build_ifchanged `awk '$1{ print $1 }' <"$1=d"`
+
+# Always replace the default target.
+safe printf "\n%s" "default:"
+safe awk '
+  $1{ printf(" \\\n%s",$1) }
+  END { print "\n" }
+' < build=d
+
+# Retain targets that do not appear in DB.
+{ safe build status
+  safe echo 'default'
+  safe echo ''
+  safe cat Makefile
+} | safe awk -F ' ' '
+  BEGIN {
+    target = 0
+  }
+  # Capture sources and targets already built.
+  0 == target {
+    if ("" == $1) {
+      target = 1
+      next
+    }
+    seen[$1":"] = 1
+    next
+  }
+  # Find targets.  Skip if seen, otherwise pass through.
+  1 == target { 
+    # Looking for target
+    if ("" == $1)
+      next
+    targ = $1
+    # Target seen.  Skip
+    if (seen[targ]) {
+      target = 2
+      next
+    }
+    print $0
+    target = 3
+    next
+  }
+  # Skip target.
+  2 == target {
+    if ("" == $1)
+      target = 1 
+    next
+  }
+  # Pass target through
+  3 == target {
+    print $0
+    if ("" == $1)
+      target = 1 
+    next
+  }
+'
+
+safe build_info | safe awk '
+  BEGIN {
+    target = ""
+    build = ""
+    base = ""
+    state = 0
+  }
+  3 == state && "" == $1 {
+    if ("" == target || "" == build) exit 111
+    printf("\n\tsh makefile.build %s %s %s\n",build,target,base)
+    target = ""
+    build = ""
+    base = ""
+    state = 0
+    next
+  }
+  0 == state { target = $1; printf("\n%s:",target); state = 1; next }
+  1 == state { build = $1; state = 2; next }
+  2 == state { base = $1; state = 3; next }
+  { printf(" \\\n%s",$1); next }
+' target="$f"
+
+exit $?

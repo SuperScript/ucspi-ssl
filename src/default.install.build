@@ -4,6 +4,8 @@
 # Build it.
 # Copy files listed in it.install=d || it.command || it=d.
 
+# NB: If you change the rules in this file, also change the corresponding make
+# rules in mkfile.dat.
 
 umask 022
 here="`env - PATH="$PATH" pwd`"
@@ -52,11 +54,17 @@ build_ifchanged "$2.command"
 
 if test -r "$1=d"
 then
+  build_ifchanged "$1=d"
   listfile="$1=d"
 else if test -r "$2.command=d"
 then
+  build_ifcreated "$1=d"
+  build_ifchanged "$2.command=d"
   listfile="$2.command=d"
 else
+  build_ifcreated "$1=d"
+  build_ifcreated "$2.command=d"
+  build_ifchanged "$2=d"
   listfile="$2=d"
 fi fi
 

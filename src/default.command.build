@@ -18,6 +18,7 @@ then
   listfile="$1=d"
 else
   build_ifcreated "$1=d"
+  build_ifchanged "$2=d"
   listfile="$2=d"
 fi
 

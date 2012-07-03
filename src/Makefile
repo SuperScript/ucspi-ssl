@@ -2,6 +2,7 @@
 default: \
 it.command
 
+
 alloc.o: \
 default.o.build \
 compile \
@@ -721,8 +722,15 @@ sslprint
 
 it.command: \
 default.command.build \
-it
+it \
+it=d
 	sh makefile.build default.command.build it.command it
+
+it.install: \
+default.install.build \
+it.command \
+it=d
+	sh makefile.build default.install.build it.install it
 
 it.rts: \
 default.rts.build \
@@ -774,13 +782,13 @@ home
 	sh makefile.build default.build makescrip makescrip
 
 mkfile: \
-default.build \
+mkfile.build \
 mkfile=d \
 it.command \
 it.rts \
 sslperl.command \
 sslperl.rts
-	sh makefile.build default.build mkfile mkfile
+	sh makefile.build mkfile.build mkfile 
 
 ndelay_off.o: \
 default.o.build \
@@ -1391,8 +1399,14 @@ perlembed.lib
 sslperl.command: \
 default.command.build \
 sslperl \
-sslperl.command=d
+sslperl=d
 	sh makefile.build default.command.build sslperl.command sslperl
+
+sslperl.install: \
+default.install.build \
+sslperl.command \
+sslperl=d
+	sh makefile.build default.install.build sslperl.install sslperl
 
 sslperl.o: \
 sslperl.o.build \
@@ -1915,189 +1929,3 @@ wait_pid.c \
 error.h \
 haswaitp.h
 	sh makefile.build default.o.build wait_pid.o wait_pid
-
-clean:
-	rm -f \
-	alloc.o \
-	alloc_re.o \
-	auto-str \
-	auto-str.o \
-	auto_cadir.c \
-	auto_cadir.o \
-	auto_cafile.c \
-	auto_cafile.o \
-	auto_ccafile.c \
-	auto_ccafile.o \
-	auto_certfile.c \
-	auto_certfile.o \
-	auto_ciphers.c \
-	auto_ciphers.o \
-	auto_dhfile.c \
-	auto_dhfile.o \
-	auto_keyfile.c \
-	auto_keyfile.o \
-	buffer.o \
-	buffer_0.o \
-	buffer_1.o \
-	buffer_2.o \
-	buffer_copy.o \
-	buffer_get.o \
-	buffer_put.o \
-	buffer_read.o \
-	buffer_write.o \
-	byte_chr.o \
-	byte_copy.o \
-	byte_cr.o \
-	byte_diff.o \
-	byte_zero.o \
-	case_diffb.o \
-	case_diffs.o \
-	cdb.a \
-	cdb.o \
-	cdb_hash.o \
-	cdb_make.o \
-	chkshsgr \
-	chkshsgr.o \
-	choose \
-	coe.o \
-	compile \
-	dns_dfd.o \
-	dns_domain.o \
-	dns_dtda.o \
-	dns_ip.o \
-	dns_ipq.o \
-	dns_name.o \
-	dns_nd.o \
-	dns_packet.o \
-	dns_random.o \
-	dns_rcip.o \
-	dns_rcrw.o \
-	dns_resolve.o \
-	dns_sortip.o \
-	dns_transmit.o \
-	dns_txt.o \
-	env.o \
-	error.o \
-	error_str.o \
-	fd_copy.o \
-	fd_move.o \
-	fmt_ulong.o \
-	getln.o \
-	getln2.o \
-	hasflock.h \
-	hassgact.h \
-	hassgprm.h \
-	hasshsgr.h \
-	haswaitp.h \
-	home \
-	https@ \
-	iopause.h \
-	iopause.o \
-	ip4_fmt.o \
-	ip4_scan.o \
-	it \
-	it.command \
-	it.rts \
-	load \
-	lock_ex.o \
-	lock_un.o \
-	makeinclude \
-	makelib \
-	makescrip \
-	mkfile \
-	ndelay_off.o \
-	ndelay_on.o \
-	open_append.o \
-	open_read.o \
-	open_trunc.o \
-	openreadclose.o \
-	pathexec_env.o \
-	pathexec_run.o \
-	perlembed.lib \
-	prot.o \
-	readclose.o \
-	remoteinfo.o \
-	rules.o \
-	scan_uint.o \
-	scan_ulong.o \
-	seek_set.o \
-	select.h \
-	sgetopt.o \
-	sig.o \
-	sig_block.o \
-	sig_catch.o \
-	sig_pause.o \
-	socket.lib \
-	socket_accept.o \
-	socket_bind.o \
-	socket_conn.o \
-	socket_delay.o \
-	socket_listen.o \
-	socket_local.o \
-	socket_opts.o \
-	socket_remote.o \
-	socket_tcp.o \
-	socket_udp.o \
-	ssl.a \
-	ssl.o \
-	ssl_ca.o \
-	ssl_cca.o \
-	ssl_certkey.o \
-	ssl_ciphers.o \
-	ssl_context.o \
-	ssl_env.o \
-	ssl_error.o \
-	ssl_io.o \
-	ssl_new.o \
-	ssl_params.o \
-	ssl_timeoutaccept.o \
-	ssl_timeoutconn.o \
-	ssl_verify.o \
-	sslcat \
-	sslclient \
-	sslclient.o \
-	sslconnect \
-	sslhandle.o \
-	sslperl \
-	sslperl.command \
-	sslperl.o \
-	sslperl.rts \
-	sslprint \
-	sslprint.o \
-	sslserver \
-	sslserver.o \
-	str_chr.o \
-	str_diff.o \
-	str_len.o \
-	str_start.o \
-	stralloc_cat.o \
-	stralloc_catb.o \
-	stralloc_cats.o \
-	stralloc_copy.o \
-	stralloc_eady.o \
-	stralloc_opyb.o \
-	stralloc_opys.o \
-	stralloc_pend.o \
-	strerr_die.o \
-	strerr_sys.o \
-	subgetopt.o \
-	systype \
-	tai_pack.o \
-	taia_add.o \
-	taia_approx.o \
-	taia_frac.o \
-	taia_less.o \
-	taia_now.o \
-	taia_pack.o \
-	taia_sub.o \
-	taia_uint.o \
-	timeoutconn.o \
-	uint16_pack.o \
-	uint16_unpack.o \
-	uint32.h \
-	uint32_pack.o \
-	uint32_unpack.o \
-	uint64.h \
-	unix.a \
-	wait_nohang.o \
-	wait_pid.o
