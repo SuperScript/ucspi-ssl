@@ -9,10 +9,11 @@ test -d compile || barf "no compile directory"
 
 if test 0 -eq $#
 then
-  exec package/build -b make `awk '$1{print $1".install"}' < build=d`
+  exec package/create compile src make \
+    `awk '$1{print $1".install"}' < src/build=d`
 fi
 
-exec package/build -b make `awk '
+exec package/create compile src make `awk '
   BEGIN {
     for (i = 1;i < ARGC;++i)
       print ARGV[i]".install"

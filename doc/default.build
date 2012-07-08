@@ -100,42 +100,6 @@ case $1 in
     sh find-systype.sh
     exit $?
     ;;
-  mkfile)
-    build_ifchanged mkfile=d
-    build_ifchanged `awk '$1{ print $1 }' <"$1=d"`
-    safe printf "\n%s" "default:"
-    safe awk '
-      $1{ printf(" \\\n%s",$1) }
-      END { print "" }
-    ' < build=d
-    safe build_info | safe awk '
-      BEGIN {
-	target = ""
-	build = ""
-	base = ""
-	state = 0
-      }
-      3 == state && "" == $1 {
-	if ("" == target || "" == build) exit 111
-	printf("\n\tsh makefile.build %s %s %s\n",build,target,base)
-	target = ""
-	build = ""
-	base = ""
-	state = 0
-	next
-      }
-      0 == state { target = $1; printf("\n%s:",target); state = 1; next }
-      1 == state { build = $1; state = 2; next }
-      2 == state { base = $1; state = 3; next }
-      { printf(" \\\n%s",$1); next }
-    ' target="$f"
-    safe printf "\n%s:\n\t%s" 'clean' 'rm -f'
-    safe build_list | safe awk '
-      { printf(" \\\n\t%s",$1) }
-      END { print "" }
-    '
-    exit $?
-    ;;
 esac
 
 build_failed "no such target"

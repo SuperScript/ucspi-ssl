@@ -11,6 +11,10 @@ ucspi-tcp.
 
 == Instructions
 
+Generate http://www.openssl.org/docs/apps/dhparam.html[DH parameters] if
+necessary.  Update +src/conf-dhfile+ to reflect your DH parameter file.
+
+
 === Installing Under +/package+
 
 These instructions describe an installation of a versioned distribution under
@@ -35,9 +39,7 @@ rm {package}-{version}.tar
 cd {path}/{package}-{version}
 !!!!
 
-Generate http://www.openssl.org/docs/apps/dhparam.html[DH parameters] if
-necessary.
-
+Follow the instructions for <<completing,completing the installation>>.
 
 === Installing Under A Working Copy
 
@@ -45,7 +47,13 @@ These instructions describe how to install to run executables from a working
 copy of the repository.
 
 Clone the repository here: https://github.com/SuperScript/{package}[{package}].
-Check out the branch of your choice.
+Check out the branch of your choice and +cd+ to the top-level directory.
+
+Follow the instructions for <<completing,completing the installation>>.
+
+
+[[completing]]
+=== Completing The Installation
 
 Determine the list of directories to symlink commands into by editing the
 +package/command-ln+ file.  The default is
@@ -58,14 +66,29 @@ Compile the package:
 !!!!
 package/compile
 !!!!
-This compiles programs and copies them to the +commands/+ director.
+This compiles programs for the main package.
 
-Run some tests:
+Optionally compile +sslperl+:
 !!!!
-package/compile rts
+package/compile sslperl
 !!!!
-If the tests fail you will see a message indicating where to look for more
-information.
+This compiles the +sslperl+ program.
+
+Optionally copy commands into the +command/+ directory:
+!!!!
+package/compile it.command
+package/compile sslperl.command
+!!!!
+
+
+Run some tests for the main programs and optionally the +sslperl+ programs:
+!!!!
+package/compile it.rts
+package/compile sslperl.rts
+!!!!
+This will copy commands into the +command/+ directory before running tests in
+case you did not do so above.  If the tests fail you will see a message
+indicating where to look for more information.
 
 Install the package.  This will compile the package if you have not already done
 so:
@@ -73,14 +96,18 @@ so:
 package/install
 !!!!
 
-Compile the documentation:
+Optionally install +sslperl+:
 !!!!
-package/compile-doc
+package/install sslperl
 !!!!
 
-This creates and populates the +html/+ directory.  It requires
+Compile the documentation:
+!!!!
+package/docs
+!!!!
+This creates and populates the +www/+ directory.  It requires
 http://www.methods.co.nz/asciidoc/[asciidoc].  The source files are located in
-+doc/+ and are directly readable.
++doc/+ and are directly readable.  Look for files with a +.txt+ extension.
 
 
 == Report Success

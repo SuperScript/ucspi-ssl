@@ -1,9 +1,9 @@
 #!/bin/sh
-shout() { echo "package/compile: $*" >&2; }
+shout() { echo "package/build-doc: $*" >&2; }
 barf() { shout "fatal: $*"; exit 111; }
 
 usage() {
-  shout "usage: package/compile [ --help -F -- ] [ target ... ]"
+  shout "usage: package/build-doc [ --help -F -- ] [ target ... ]"
   exit 100
 }
 
@@ -35,11 +35,11 @@ done
 
 if test 0 -eq $#
 then
-  exec package/create $remove compile src make \
+  exec package/create $remove compile-doc doc build target \
     `awk '$1{print $1}' < src/build=d`
 fi
 
-exec package/create $remove compile src make "$@"
+exec package/create $remove compile-doc doc build target "$@"
 
 barf "cannot compile $*"
 

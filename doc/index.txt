@@ -55,7 +55,7 @@ The original UCSPI package by D.J. Bernstein,
 http://cr.yp.to/ucspi-tcp.html[ucspi-tcp].
 
 A local-domain socket UCSPI package,
-http://www.superscript.com/software/ucspi-ipc.html[ucspi-ipc].
+http://www.superscript.com/ucspi-ipc/index.html[ucspi-ipc].
 
 == License
 Files in this package are in the public domain.

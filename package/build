@@ -3,55 +3,22 @@ shout() { echo "package/build: $*" >&2; }
 barf() { shout "fatal: $*"; exit 111; }
 safe() { "$@" || barf "cannot $*"; }
 usage() {
-  shout "usage: package/build [ --help -v -q -f -F -c compile_dir -s src_dir -b build_cmd ] target [ ... ]"
+  shout "usage: package/build [ --help -F ] [ opts target ... ]"
   exit 100
 }
 
+
 #### MAIN
 
-umask 022
+test -d package || barf "no package directory"
 
-test "$1" = "--help" && usage
-
-here="`env - PATH=$PATH pwd`"
-
-compile_dir="compile"
-src_dir="src"
-remove=0
-build="build"
-
-verbose=""
-force=""
+remove=""
 while test $# -gt 0
 do
   case "$1" in
-    -v)
-      verbose="$verbose -v"
-      shift
-      ;;
-    -q)
-      verbose="$verbose -q"
-      shift
-      ;;
-    -f)
-      force="-f"
-      shift
-      ;;
     -F)
-      remove=1
+      remove="-F"
       shift
-      ;;
-    -c)
-      compile_dir="$2"
-      shift; shift
-      ;;
-    -s)
-      src_dir="$2"
-      shift; shift
-      ;;
-    -b)
-      build_command="$2"
-      shift; shift
       ;;
     --)
       shift
@@ -66,32 +33,17 @@ do
   esac
 done
 
-test 0 -eq $# && usage
+here="`env - PATH=$PATH pwd`"
 
-test -d "$src_dir" || barf "no src directory: $src_dir"
-test -d "$compile_dir" && test 0 -lt $remove && rm -rf "$compile_dir"
-
-# Link files into $compile_dir.
-safe mkdir -p "$compile_dir"
-test -h "$compile_dir/$src_dir" \
-  || safe ln -s "$here/$src_dir" "$compile_dir/$src_dir"
-
-safe ls "$src_dir" | while read f
-do
-  test -h "$compile_dir/$f" || safe ln -s "$src_dir/$f" "$compile_dir/$f"
-done
-
-# Build targets in $compile_dir.
-safe cd "$compile_dir"
-
-if test -z "$build_command" -o "build" = "$build_command"
+if test 0 -eq $#
 then
-  build_cmd="$build $verbose target $force"
-else
-  build_cmd="$build_command"
+  exec package/create $remove compile src build target \
+    `awk '$1{print $1}' < src/build=d`
 fi
 
-safe $build_cmd "$@"
+exec package/create $remove compile src build target "$@"
+
+barf "cannot build $*"
 
 exit 0
 

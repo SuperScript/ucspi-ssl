@@ -1,0 +1,28 @@
+# Copy web pages to www/
+
+# install_command dest src
+install_www() {
+  safe rm -f "$1"'{new}'
+  safe cp -p "$2" "$1"'{new}'
+  safe mv -f "$1"'{new}' "$1"
+}
+
+build_ifchanged "$2"
+if test -r "$1=d"
+then
+  build_ifchanged "$1=d"
+  listfile="$1=d"
+else
+  build_ifcreated "$1=d"
+  listfile="$2=d"
+fi
+
+test -d ../www || safe mkdir ../www
+awk '$1{ print $1; }' <"$listfile" | while read f
+do
+  install_www "../www/$f" "$f"
+done
+
+build_notarget
+exit 0
+

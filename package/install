@@ -5,8 +5,8 @@ safe() { "$@" || barf "cannot $*"; }
 
 #### MAIN
 
-safe package/compile ${1+"$1"}
-safe package/upgrade ${1+"$1"}
-safe package/run ${1+"$1"}
+safe package/compile ${1+"$@"}
+safe package/upgrade ${1+"$@"}
+safe package/run ${1+"$@"}
 
 exit 0

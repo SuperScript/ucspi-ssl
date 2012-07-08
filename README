@@ -2,3 +2,14 @@ This is the ucspi-ssl package.
 
 Please refer to doc/index.txt for more information.
 
+Development of the ucspi-ssl package has stalled at its original home.
+Fortunately others have stepped in to continue development and improve upon what
+came before.  Please refer to these links for alternatives:
+
+Scott Gifford's
+  https://github.com/scottgifford/ucspi-ssl
+
+Erwin Hoffman's
+  http://www.fehcom.de/ipnet/ucspi-ssl/doxygen/index.html
+
+

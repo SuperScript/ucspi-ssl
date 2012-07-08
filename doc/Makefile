@@ -63,10 +63,10 @@ it
 	sh makefile.build default.www.build it.www it
 
 mkfile: \
-default.build \
+mkfile.build \
 mkfile=d \
 it
-	sh makefile.build default.build mkfile mkfile
+	sh makefile.build mkfile.build mkfile 
 
 prefork.html: \
 default.html.build \
@@ -115,20 +115,3 @@ asciidoc.conf \
 webpage.conf \
 attribute.conf
 	sh makefile.build default.html.build sslserver.html sslserver
-
-clean:
-	rm -f \
-	attribute.conf \
-	environment.html \
-	https@.html \
-	index.html \
-	install.html \
-	it \
-	it.www \
-	mkfile \
-	prefork.html \
-	sslcat.html \
-	sslclient.html \
-	sslconnect.html \
-	sslperl.html \
-	sslserver.html

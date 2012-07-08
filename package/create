@@ -1,0 +1,64 @@
+#!/bin/sh
+shout() { echo "package/create: $*" >&2; }
+barf() { shout "fatal: $*"; exit 111; }
+safe() { "$@" || barf "cannot $*"; }
+usage() {
+  shout "usage: package/create [ --help -F ] compile_dir src_dir build_cmd [ arg ... ] [ target ... ]"
+  exit 100
+}
+
+#### MAIN
+
+umask 022
+
+here="`env - PATH=$PATH pwd`"
+
+remove=0
+while test $# -gt 0
+do
+  case "$1" in
+    -F)
+      remove=1
+      shift
+      ;;
+    --help)
+      usage
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      usage
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+test 3 -le $# || usage
+
+compile_dir="$1"
+src_dir="$2"
+shift; shift
+
+test -d "$src_dir" || barf "no src directory: $src_dir"
+test -d "$compile_dir" && test 0 -lt $remove && rm -rf "$compile_dir"
+
+# Link files into $compile_dir.
+safe mkdir -p "$compile_dir"
+test -h "$compile_dir/$src_dir" \
+  || safe ln -s "$here/$src_dir" "$compile_dir/$src_dir"
+
+safe ls "$src_dir" | while read f
+do
+  test -h "$compile_dir/$f" || safe ln -s "$src_dir/$f" "$compile_dir/$f"
+done
+
+# Build targets in $compile_dir.
+safe cd "$compile_dir"
+safe $build_cmd "$@"
+
+exit 0
+
