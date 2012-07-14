@@ -50,6 +50,9 @@ Scott Gifford's https://github.com/scottgifford/ucspi-ssl[ucspi-ssl].
 Erwin Hoffman's
 http://www.fehcom.de/ipnet/ucspi-ssl/doxygen/index.html[ucspi-ssl].
 
+Git repository
+https://github.com/SuperScript/ucspi-ssl
+
 === Other Packages
 The original UCSPI package by D.J. Bernstein,
 http://cr.yp.to/ucspi-tcp.html[ucspi-tcp].
