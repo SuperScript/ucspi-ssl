@@ -1,6 +1,5 @@
 # This file contains a shell script that constructs a signature for source or
 # target files.  It takes the file name as an argument and prints the signature.
-# Lines beginning with # are stripped.
 
 openssl md5 "$1"
 
@@ -8,5 +7,9 @@ openssl md5 "$1"
 # sha1 -q "$1"
 # sha256 -q "$1"
 #
-# FreeBSD
-#stat -f '%m' "$1"
+# Approximate make behavior.
+# Use timestamp to indicate version.
+# NB: Only looks at current and recorded timestamp.
+#     No comparison with target.
+# Works on FreeBSD.
+#stat -L -f '%m' "$1"

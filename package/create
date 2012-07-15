@@ -3,7 +3,7 @@ shout() { echo "package/create: $*" >&2; }
 barf() { shout "fatal: $*"; exit 111; }
 safe() { "$@" || barf "cannot $*"; }
 usage() {
-  shout "usage: package/create [ --help -F ] compile_dir src_dir build_cmd [ arg ... ] [ target ... ]"
+  shout "usage: package/create [ --help -F -- ] compile_dir src_dir build_cmd [ arg ... ] [ target ... ]"
   exit 100
 }
 
